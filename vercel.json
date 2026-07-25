@@ -1,1 +1,3 @@
-{"rewrites":[{"source":"/(about|program|reviews|faq|contacts|application)","destination":"/index.html"}]}
+{
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}

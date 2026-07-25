@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: smartslimway-max-bot
+    runtime: node
+    # When this blueprint is read from the monorepo root, deploy only the bot.
+    # If Render already has max-bot configured as its root directory, use "." there.
+    rootDir: .
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: MAX_BOT_TOKEN
+        sync: false
+      - key: MAX_WEBHOOK_SECRET
+        generateValue: true
+      - key: MINI_APP_URL
+        value: https://new-site-kappa-eight.vercel.app/
+      - key: APPLICATION_URL
+        value: https://new-site-kappa-eight.vercel.app/application
+      - key: CALCULATOR_URL
+        value: https://new-site-kappa-eight.vercel.app/calculator
+      - key: REVIEWS_URL
+        value: https://new-site-kappa-eight.vercel.app/reviews
+      - key: ABOUT_URL
+        value: https://new-site-kappa-eight.vercel.app/about
+      - key: MARATHON_URL
+        value: https://new-site-kappa-eight.vercel.app/program
+      - key: FAQ_URL
+        value: https://new-site-kappa-eight.vercel.app/faq
+      - key: CONTACTS_URL
+        value: https://new-site-kappa-eight.vercel.app/contacts
+      - key: MAX_API_BASE
+        value: https://platform-api2.max.ru
+      - key: WEBHOOK_URL
+        value: https://smartslimway-max-bot.onrender.com/webhook
+      - key: MAX_TLS_INSECURE
+        value: "false"

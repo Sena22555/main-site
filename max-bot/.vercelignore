@@ -1,0 +1,16 @@
+# Backend/bot files are not part of the static website deployment.
+package.json
+max-bot.js
+server.js
+data/
+.env.max-bot.example
+google-sheet-setup.md
+README.md
+
+# Local artifacts.
+.git/
+.vercel/
+screenshots/
+report-*.html
+report-*.pdf
+report-*.rtf

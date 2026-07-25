@@ -1,0 +1,14 @@
+{
+  "name": "smartslimway-max-bot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "MAX webhook bot for Smart Slim Way mini app",
+  "main": "max-bot.js",
+  "scripts": {
+    "start": "node max-bot.js",
+    "check": "node --check max-bot.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
