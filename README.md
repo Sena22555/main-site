@@ -22,6 +22,6 @@ npm run bot:start  # run MAX bot from max-bot/
 npm run check      # website build + bot check
 ```
 
-Production website: `https://new-site-kappa-eight.vercel.app/`
+Production website: `https://new-site-kappa-eight.vercel.app/smartslimway`
 
 The existing MAX bot remains deployed from the legacy repository until Render is manually switched. Do not delete or disable the legacy deployment before the new monorepo deployment passes `/health` and webhook tests.

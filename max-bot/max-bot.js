@@ -30,7 +30,7 @@ function normalizeLink(url) {
 
 // Default every user-facing route to the primary frontend while allowing the
 // future Render service to override URLs without editing the bot source.
-const MINI_APP_URL = normalizeLink(process.env.MINI_APP_URL || 'https://new-site-kappa-eight.vercel.app/');
+const MINI_APP_URL = normalizeLink(process.env.MINI_APP_URL || 'https://new-site-kappa-eight.vercel.app/smartslimway');
 const SITE_ORIGIN = MINI_APP_URL.replace(/\/$/, '');
 const APPLICATION_URL = normalizeLink(process.env.APPLICATION_URL || `${SITE_ORIGIN}/application`);
 const CALCULATOR_URL = normalizeLink(process.env.CALCULATOR_URL || `${SITE_ORIGIN}/calculator`);

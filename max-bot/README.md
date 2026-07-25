@@ -42,7 +42,7 @@ When ready to move the existing Render service:
 4. Keep the existing public service URL so the webhook remains `https://smartslimway-max-bot.onrender.com/webhook`.
 5. Deploy and verify `/health` before making any other changes.
 
-The bot links to the primary website at `https://new-site-kappa-eight.vercel.app/` and its application, calculator, reviews, about, program, FAQ, and contacts routes.
+The bot links to the primary website at `https://new-site-kappa-eight.vercel.app/smartslimway` and its application, calculator, reviews, about, program, FAQ, and contacts routes.
 
 ## Required environment variables
 

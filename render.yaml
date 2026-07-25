@@ -13,7 +13,7 @@ services:
       - key: MAX_WEBHOOK_SECRET
         generateValue: true
       - key: MINI_APP_URL
-        value: https://new-site-kappa-eight.vercel.app/
+        value: https://new-site-kappa-eight.vercel.app/smartslimway
       - key: APPLICATION_URL
         value: https://new-site-kappa-eight.vercel.app/application
       - key: CALCULATOR_URL
