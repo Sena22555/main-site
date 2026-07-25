@@ -2,10 +2,12 @@
 @font-face { font-family: 'PP Mondwest'; src: url('/PPMondwest-Regular.woff2') format('woff2'); font-weight: 400; font-display: swap; }
 @font-face { font-family: 'PP Neue Montreal'; src: url('https://assets.website-files.com/6009ec8cda7f305645c9d91b/60176f9bb43e36419997ecfe_PPNeueMontreal-Book.otf') format('opentype'); font-weight: 400; font-display: swap; }
 @font-face { font-family: 'PP Neue Montreal'; src: url('https://assets.website-files.com/6009ec8cda7f305645c9d91b/60176f9b39c5673e51a86f5a_PPNeueMontreal-Medium.otf') format('opentype'); font-weight: 500; font-display: swap; }
-:root { font-family: 'PP Neue Montreal', 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #051a24; background: #fff; font-synthesis: none; }
+:root { font-family: 'PP Neue Montreal', 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #051a24; background: #fff; color-scheme: light only; font-synthesis: none; }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
-body { margin: 0; min-width: 320px; overflow-x: hidden; background: #fff; }
+html, body, #root, main { min-height: 100%; background-color: #fff; }
+body { margin: 0; min-width: 320px; overflow-x: hidden; background: #fff; color: #051a24; }
+input, textarea, select, button { color-scheme: light; }
 a { color: inherit; text-decoration: none; }
 .topbar { height: 70px; display: flex; align-items: center; justify-content: space-between; padding: 0 30px; font-size: 11px; letter-spacing: .03em; text-transform: uppercase; }
 .mini-logo { font-family: 'PP Mondwest', Georgia, serif; font-size: 23px; text-transform: none; letter-spacing: -.08em; }.mini-logo span { color: #f15a38; }
@@ -92,3 +94,4 @@ body { font-size: 17px; line-height: 1.6; }
 .calculation-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:30px 0 18px}.calculation-steps span{padding:11px 10px;border:1px solid rgba(255,255,255,.18);border-radius:12px}.calculation-steps span.active{background:#b8d9c9;color:#051a24;border-color:#b8d9c9}.calculation-steps small,.calculation-steps b{display:block}.calculation-steps small{font-size:9px;line-height:1.3;opacity:.65}.calculation-steps b{font-size:13px;margin-top:5px}.nutrition-grid input::placeholder{color:#708088;opacity:.7}
 @media(max-width:420px){.calculation-steps{grid-template-columns:1fr}.calculation-steps span{display:flex;justify-content:space-between;align-items:center}.calculation-steps b{margin:0}.result-goal{margin-top:25px}}
 @media(max-width:700px){.bottom-nav{bottom:14px;gap:9px;padding:7px 8px 7px 9px}.bottom-menu{width:40px;height:40px}.bottom-nav>span{font-size:24px;margin:0 3px}.footer-signoff{margin-bottom:45px}.partner{touch-action:pan-y}.partner h2{font-size:clamp(38px,12vw,55px)}.knowledge-grid,.faq-experience,.contact-card-rich{grid-template-columns:1fr;gap:16px}.knowledge-grid article{padding:23px}.faq-experience{gap:42px}.faq-intro{position:static}.faq-intro blockquote{font-size:27px}.faq-lead{margin-top:-10px}.faq summary{gap:8px}.faq summary span{width:26px;flex-basis:26px}.contact-lead{font-size:16px;margin-top:-10px}.contact-card-copy blockquote{font-size:21px}.contact blockquote{font-size:23px}.program-quote{padding:32px 4px;font-size:26px}}
+.medical-question{margin-top:24px!important;padding:18px!important;border:1px solid rgba(246,252,255,.24)!important;border-radius:16px}.medical-question legend{padding:0 6px;font-size:13px!important}.medical-question label{display:flex!important}.medical-warning{margin:14px 0 0;padding:13px 15px;border-radius:12px;background:#fff1e8;color:#7a2d16;font-size:13px;line-height:1.5}.application-form .button.is-blocked{opacity:.45;cursor:not-allowed}.faq summary{gap:12px}.faq summary>span{width:auto;flex:1;font-family:inherit;font-size:inherit;opacity:1}.faq summary svg{flex:0 0 auto}
