@@ -41,8 +41,8 @@ function ParallaxImage() {
 }
 function CinematicHero() {
   const videoRef = useRef<HTMLVideoElement>(null); const [videoReady, setVideoReady] = useState(false); const frame = useRef(0); const current = useRef({ x: 0, y: 0 }); const target = useRef({ x: 0, y: 0 });
-  useEffect(() => { const video = videoRef.current; const startVideo = () => { if (!video) return; video.muted = true; video.play().catch(() => undefined); }; const onMove = (event: MouseEvent) => { target.current.x = ((event.clientX - innerWidth / 2) / (innerWidth / 2)) * 18; target.current.y = ((event.clientY - innerHeight / 2) / (innerHeight / 2)) * 12; }; const loop = () => { current.current.x += (target.current.x - current.current.x) * .06; current.current.y += (target.current.y - current.current.y) * .06; if (videoRef.current) videoRef.current.style.transform = `translate3d(${current.current.x}px, ${current.current.y}px, 0) scale(1.08)`; frame.current = requestAnimationFrame(loop); }; startVideo(); addEventListener('mousemove', onMove, { passive: true }); addEventListener('pointerdown', startVideo, { passive: true }); addEventListener('touchstart', startVideo, { passive: true }); addEventListener('click', startVideo, { passive: true }); addEventListener('visibilitychange', startVideo); frame.current = requestAnimationFrame(loop); return () => { removeEventListener('mousemove', onMove); removeEventListener('pointerdown', startVideo); removeEventListener('touchstart', startVideo); removeEventListener('click', startVideo); removeEventListener('visibilitychange', startVideo); cancelAnimationFrame(frame.current); }; }, []);
-  return <section id="top" className="cinematic-hero"><img className="cinematic-poster" src="/hero-first-frame.jpg" alt="" aria-hidden="true" /><video ref={videoRef} className={`cinematic-video ${videoReady ? 'is-ready' : ''}`} autoPlay muted loop playsInline preload="auto" poster="/hero-first-frame.jpg" onCanPlay={() => setVideoReady(true)} onLoadedMetadata={(event) => { event.currentTarget.playbackRate = 1.25; }}><source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260510_060007_60275ce7-030c-4668-a160-8f364ec537d3.mp4" type="video/mp4" /></video><div className="cinematic-shade" /><div className="cinematic-copy"><Reveal delay={.1}><p className="cinematic-kicker">Марафон «Сильные девочки» · SmartSlimWay</p></Reveal><Reveal delay={.2}><h1>Питание<br /><em>без крайностей.</em></h1></Reveal><Reveal delay={.3}><p className="cinematic-description">Собери свою систему питания — в своём ритме, с поддержкой и без вечной войны с собой.</p></Reveal><Reveal delay={.4}><a className="cinematic-cta" href="/application">Подать заявку <ArrowUpRight size={16} /></a></Reveal></div><div className="cinematic-bottom"><span>Три этапа · Личный наставник · Онлайн-анкета</span><span className="cinematic-scroll">Scroll to explore ↓</span></div></section>;
+  useEffect(() => { const video = videoRef.current; const startVideo = () => { if (!video) return; video.muted = true; video.defaultMuted = true; video.play().catch(() => setVideoReady(false)); }; const onMove = (event: MouseEvent) => { target.current.x = ((event.clientX - innerWidth / 2) / (innerWidth / 2)) * 18; target.current.y = ((event.clientY - innerHeight / 2) / (innerHeight / 2)) * 12; }; const loop = () => { current.current.x += (target.current.x - current.current.x) * .06; current.current.y += (target.current.y - current.current.y) * .06; if (videoRef.current) videoRef.current.style.transform = `translate3d(${current.current.x}px, ${current.current.y}px, 0) scale(1.08)`; frame.current = requestAnimationFrame(loop); }; startVideo(); addEventListener('pageshow', startVideo); addEventListener('visibilitychange', startVideo); frame.current = requestAnimationFrame(loop); return () => { removeEventListener('pageshow', startVideo); removeEventListener('visibilitychange', startVideo); cancelAnimationFrame(frame.current); }; }, []);
+  return <section id="top" className="cinematic-hero"><img className="cinematic-poster" src="/hero-first-frame.jpg" alt="" aria-hidden="true" /><video ref={videoRef} className={`cinematic-video ${videoReady ? 'is-ready' : ''}`} autoPlay muted loop playsInline disablePictureInPicture preload="auto" poster="/hero-first-frame.jpg" onPlaying={() => setVideoReady(true)} onPause={() => setVideoReady(false)} onLoadedMetadata={(event) => { event.currentTarget.muted = true; event.currentTarget.defaultMuted = true; event.currentTarget.playbackRate = 1.25; event.currentTarget.play().catch(() => setVideoReady(false)); }}><source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260510_060007_60275ce7-030c-4668-a160-8f364ec537d3.mp4" type="video/mp4" /></video><div className="cinematic-shade" /><div className="cinematic-copy"><Reveal delay={.1}><p className="cinematic-kicker">Марафон «Сильные девочки» · SmartSlimWay</p></Reveal><Reveal delay={.2}><h1>Питание<br /><em>без крайностей.</em></h1></Reveal><Reveal delay={.3}><p className="cinematic-description">Собери свою систему питания — в своём ритме, с поддержкой и без вечной войны с собой.</p></Reveal><Reveal delay={.4}><a className="cinematic-cta" href="/application">Подать заявку <ArrowUpRight size={16} /></a></Reveal></div><div className="cinematic-bottom"><span>Три этапа · Личный наставник · Онлайн-анкета</span><span className="cinematic-scroll">Scroll to explore ↓</span></div></section>;
 }
 function Reviews() {
   const [active, setActive] = useState(0); const [paused, setPaused] = useState(false);
@@ -74,7 +74,7 @@ type NutritionGoal = 'loss' | 'maintenance' | 'gain';
 type NutritionProfile = { sex: 'female' | 'male'; age: number | ''; weight: number | ''; height: number | ''; activity: string; goal: NutritionGoal; meals: number };
 type Nutrients = { calories: number; protein: number; fat: number; carbs: number };
 type Food = Nutrients & { name: string; detail?: string };
-type MealIngredient = Food & { grams: number; display?: string };
+type MealIngredient = Food & { grams: number; minGrams: number; maxGrams: number; step: number; display?: string };
 type PlannedMeal = { title: string; ingredients: MealIngredient[]; nutrients: Nutrients };
 const activityLevels = [
   ['low', 'Минимальная', 'Сидячая работа, тренировки редко', 1.2],
@@ -85,7 +85,7 @@ const activityLevels = [
 ] as const;
 const goalCopy: Record<NutritionGoal, { title: string; adjustment: number; protein: number; image: string; note: string }> = {
   loss: { title: 'Снижение веса', adjustment: -0.15, protein: 1.8, image: '/balanced-plate.jpg', note: 'Умеренный дефицит около 15% от поддержки — без экстремальных ограничений.' },
-  maintenance: { title: 'Поддержание', adjustment: 0, protein: 1.6, image: '/balanced-plate.jpg', note: 'Ориентир для сохранения текущего веса и стабильной энергии.' },
+  maintenance: { title: 'Поддержание', adjustment: 0, protein: 1.8, image: '/balanced-plate.jpg', note: 'Ориентир для сохранения текущего веса и стабильной энергии.' },
   gain: { title: 'Набор массы', adjustment: 0.1, protein: 1.8, image: '/balanced-plate.jpg', note: 'Небольшой профицит около 10% от поддержки с акцентом на белок.' },
 };
 function calculateNutrition(profile: NutritionProfile) {
@@ -103,25 +103,26 @@ function calculateNutrition(profile: NutritionProfile) {
   return { bmr: Math.max(0, Math.round(bmr)), maintenance: Math.max(0, maintenance), calories: Math.max(0, calories), protein, fat, carbs, config, activityName: level[1] };
 }
 const foods: Record<string, Food> = {
-  egg: { name: 'Яйца', detail: 'вес без скорлупы · до приготовления', calories: 157, protein: 12.7, fat: 11.5, carbs: .7 },
-  oats: { name: 'Овсянка долгой варки', detail: 'сухой вес · сварить на воде', calories: 366, protein: 12.3, fat: 6.1, carbs: 61.8 },
-  berries: { name: 'Ягоды', detail: 'вес до приготовления · свежие или замороженные', calories: 45, protein: .8, fat: .4, carbs: 9.5 },
-  chicken: { name: 'Куриная грудка без кожи', detail: 'сырой вес · запечь без дополнительного масла', calories: 113, protein: 23.6, fat: 1.9, carbs: 0 },
+  egg: { name: 'Яйца', detail: 'вес без скорлупы · до приготовления', calories: 143, protein: 12.6, fat: 9.5, carbs: .7 },
+  oats: { name: 'Овсянка долгой варки', detail: 'сухой вес · сварить на воде', calories: 379, protein: 13.2, fat: 6.5, carbs: 67.7 },
+  berries: { name: 'Ягоды', detail: 'вес до приготовления · свежие или замороженные', calories: 50, protein: .7, fat: .3, carbs: 11.5 },
+  chicken: { name: 'Куриная грудка без кожи', detail: 'сырой вес · запечь без дополнительного масла', calories: 120, protein: 22.5, fat: 2.6, carbs: 0 },
   buckwheat: { name: 'Зелёная гречка', detail: 'сухой вес · отварить на воде', calories: 343, protein: 13.3, fat: 3.4, carbs: 71.5 },
   salad: { name: 'Овощной салат', detail: 'сырой вес · огурец, томат и зелень', calories: 27, protein: 1.2, fat: .3, carbs: 4.8 },
-  oliveOil: { name: 'Оливковое масло', detail: 'точный вес заправки', calories: 899, protein: 0, fat: 99.9, carbs: 0 },
+  oliveOil: { name: 'Оливковое масло', detail: 'точный вес заправки', calories: 884, protein: 0, fat: 100, carbs: 0 },
   salmon: { name: 'Лосось', detail: 'сырой вес · запечь без дополнительного масла', calories: 208, protein: 20, fat: 13, carbs: 0 },
   vegetables: { name: 'Зелёные овощи', detail: 'сырой вес · брокколи, кабачок, стручковая фасоль', calories: 35, protein: 2.4, fat: .4, carbs: 5.5 },
   yogurt: { name: 'Греческий йогурт 2%', detail: 'вес продукта из упаковки', calories: 73, protein: 10, fat: 2, carbs: 3.6 },
   apple: { name: 'Яблоко', detail: 'вес съедобной части', calories: 52, protein: .3, fat: .2, carbs: 13.8 },
-  almonds: { name: 'Миндаль', detail: 'без обжарки и масла', calories: 609, protein: 18.6, fat: 53.7, carbs: 13 },
+  almonds: { name: 'Миндаль', detail: 'без обжарки и масла', calories: 579, protein: 21.2, fat: 49.9, carbs: 21.6 },
   cottageCheese: { name: 'Творог 5%', detail: 'вес продукта из упаковки', calories: 145, protein: 21, fat: 5, carbs: 3 },
-  banana: { name: 'Банан', detail: 'вес без кожуры', calories: 96, protein: 1.5, fat: .5, carbs: 21 },
+  banana: { name: 'Банан', detail: 'вес без кожуры', calories: 89, protein: 1.1, fat: .3, carbs: 22.8 },
+  bread: { name: 'Цельнозерновой хлеб', detail: 'вес готового продукта', calories: 247, protein: 13, fat: 3.4, carbs: 41 },
+  avocado: { name: 'Авокадо', detail: 'вес мякоти', calories: 160, protein: 2, fat: 14.7, carbs: 8.5 },
 };
-const roundPortion = (grams: number, step = 5) => Math.max(step, Math.round(grams / step) * step);
 const mealWord = (count: number) => count < 5 ? 'приёма пищи' : 'приёмов пищи';
-function ingredient(food: Food, grams: number, display?: string): MealIngredient {
-  return { ...food, grams, display };
+function ingredient(food: Food, grams: number, minGrams = grams, maxGrams = grams, step = 5): MealIngredient {
+  return { ...food, grams, minGrams, maxGrams, step };
 }
 function sumNutrients(ingredients: MealIngredient[]): Nutrients {
   const totals = ingredients.reduce((total, item) => ({
@@ -138,43 +139,32 @@ function buildMealPlan(target: Nutrients, mealCount: number): { meals: PlannedMe
     : mealCount === 4
       ? ['breakfast', 'lunch', 'snack1', 'dinner']
       : ['breakfast', 'snack1', 'lunch', 'snack2', 'dinner'];
-  const templates: Record<string, { title: string; portions: [Food, number, number?][] }> = {
-    breakfast: { title: 'Завтрак', portions: [[foods.egg, 100, 50], [foods.oats, 45], [foods.berries, 100]] },
-    lunch: { title: 'Обед', portions: [[foods.salmon, 140], [foods.buckwheat, 65], [foods.salad, 250], [foods.oliveOil, 8, 1]] },
-    snack1: { title: 'Перекус', portions: [[foods.yogurt, 180], [foods.apple, 150], [foods.almonds, 15, 1]] },
-    snack2: { title: 'Второй перекус', portions: [[foods.cottageCheese, 150], [foods.banana, 100]] },
-    dinner: { title: 'Ужин', portions: [[foods.chicken, 180], [foods.vegetables, 300], [foods.oliveOil, 6, 1]] },
+  const templates: Record<string, { title: string; portions: [Food, number, number, number, number?][] }> = {
+    breakfast: { title: 'Завтрак', portions: [[foods.egg, 150, 100, 150, 50], [foods.oats, 60, 35, 100], [foods.berries, 100, 50, 150], [foods.bread, 60, 0, 160]] },
+    lunch: { title: 'Обед', portions: [[foods.salmon, 160, 140, 220], [foods.buckwheat, 70, 45, 120], [foods.salad, 250, 150, 300], [foods.oliveOil, 8, 3, 15, 1], [foods.avocado, 50, 0, 100], [foods.bread, 60, 0, 120]] },
+    snack1: { title: 'Перекус', portions: [[foods.yogurt, 200, 150, 250], [foods.apple, 150, 100, 180], [foods.almonds, 15, 10, 25, 1]] },
+    snack2: { title: 'Второй перекус', portions: [[foods.cottageCheese, 170, 80, 220], [foods.banana, 120, 60, 160]] },
+    dinner: { title: 'Ужин', portions: [[foods.chicken, 220, 180, 300], [foods.vegetables, 280, 150, 350], [foods.oliveOil, 8, 3, 15, 1]] },
   };
   const selected = mealOrder.map((key) => templates[key]);
-  const targetCalories = target.calories;
-  const targetProtein = target.protein;
-  const targetFat = target.fat;
-  const targetCarbs = target.carbs;
-  const baseCalories = selected.reduce((total, meal) => total + sumNutrients(meal.portions.map(([food, grams]) => ingredient(food, grams))).calories, 0);
-  const scale = targetCalories > 0 ? targetCalories / baseCalories : 1;
-  const meals = selected.map((meal) => {
-    const ingredients = meal.portions.map(([food, baseGrams, step]) => {
-      if (food === foods.egg) {
-        const count = Math.max(1, Math.round((baseGrams / 50) * scale));
-        return ingredient(food, count * 50, `${count} шт. · ${count * 50} г`);
-      }
-      const grams = roundPortion(baseGrams * scale, step || 5);
-      return ingredient(food, grams);
-    });
-    return { title: meal.title, ingredients, nutrients: sumNutrients(ingredients) };
-  });
-  const adjustable = meals.flatMap((meal) => meal.ingredients.filter((item) => item !== meals[0].ingredients[0]));
-  const minimumPortion = (item: MealIngredient) => item.name === 'Оливковое масло' || item.name === 'Миндаль' ? 3 : item.name === 'Ягоды' ? 40 : 30;
-  const objective = (nutrients: Nutrients) => ((nutrients.calories - targetCalories) / 12) ** 2 + ((nutrients.protein - targetProtein) * 4) ** 2 + ((nutrients.fat - targetFat) * 4) ** 2 + ((nutrients.carbs - targetCarbs) * 3) ** 2;
+  const meals = selected.map((meal) => { const ingredients = meal.portions.map(([food, base, min, max, step = 5]) => ingredient(food, base, min, max, step)); return { title: meal.title, ingredients, nutrients: sumNutrients(ingredients) }; });
+  const adjustable = meals.flatMap((meal) => meal.ingredients);
+  const objective = (nutrients: Nutrients) => {
+    const proteinShortfall = Math.max(0, target.protein - nutrients.protein);
+    const proteinExcess = Math.max(0, nutrients.protein - target.protein);
+    const shares = mealCount === 3 ? [.28, .42, .3] : mealCount === 4 ? [.25, .35, .15, .25] : [.22, .12, .3, .12, .24];
+    const distributionPenalty = meals.reduce((score, meal, index) => score + ((meal.nutrients.calories - target.calories * shares[index]) / 16) ** 2, 0);
+    return ((nutrients.calories - target.calories) / 6) ** 2 + proteinShortfall ** 2 * 16 + proteinExcess ** 2 * .35 + ((nutrients.fat - target.fat) * 1.5) ** 2 + ((nutrients.carbs - target.carbs) * .7) ** 2 + distributionPenalty;
+  };
   const planNutrients = () => meals.reduce((total, meal) => { meal.nutrients = sumNutrients(meal.ingredients); return { calories: total.calories + meal.nutrients.calories, protein: total.protein + meal.nutrients.protein, fat: total.fat + meal.nutrients.fat, carbs: total.carbs + meal.nutrients.carbs }; }, { calories: 0, protein: 0, fat: 0, carbs: 0 });
   let current = planNutrients();
-  for (let pass = 0; pass < 600; pass += 1) {
+  for (let pass = 0; pass < 500; pass += 1) {
     let improved = false;
     for (const item of adjustable) {
       const before = item.grams;
       const beforeScore = objective(current);
       for (const delta of [-1, 1]) {
-        item.grams = Math.max(minimumPortion(item), before + delta);
+        item.grams = Math.max(item.minGrams, Math.min(item.maxGrams, before + delta * item.step));
         const candidate = planNutrients();
         if (objective(candidate) < beforeScore) { current = candidate; improved = true; break; }
         item.grams = before;
@@ -183,6 +173,8 @@ function buildMealPlan(target: Nutrients, mealCount: number): { meals: PlannedMe
     }
     if (!improved) break;
   }
+  meals.forEach((meal) => { meal.ingredients = meal.ingredients.filter((item) => item.grams > 0); meal.nutrients = sumNutrients(meal.ingredients); meal.ingredients.forEach((item) => { if (item.name === 'Яйца') item.display = `${item.grams / 50} шт. · ${item.grams} г`; }); });
+  current = planNutrients();
   return { meals, nutrients: current };
 }
 function NutritionCalculator() {
