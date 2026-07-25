@@ -42,7 +42,7 @@ body { font-size: 17px; line-height: 1.6; }
 .drawer-links a { padding: 14px 0; font-size: 18px; }
 .drawer-links a span { font-size: 10px; }
 .menu-close { margin-bottom: 24px; }
-.hero h2 { color: #0d212c; font-size: clamp(38px, 5vw, 52px); line-height: 1.04; letter-spacing: -.055em; font-weight: 500; margin: 18px 0 0; }
+.hero h2 { color: #0d212c; font-size: clamp(38px, 5vw, 52px); line-height: 1.04; letter-spacing: -.055em; font-weight: 500; margin: 18px 0 0; }.editorial-title{max-width:430px;font-family:'Manrope',sans-serif;font-weight:500;line-height:.98;letter-spacing:-.065em}.editorial-title em{display:inline-block;margin-top:7px;font-family:'Prata',Georgia,serif;font-weight:400;letter-spacing:-.045em;color:#76988b}
 .intro { font-size: 17px; line-height: 1.65; gap: 22px; }
 .price { font-size: 15px; }
 .price strong { font-size: 18px; }
