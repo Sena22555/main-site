@@ -95,3 +95,72 @@ body { font-size: 17px; line-height: 1.6; }
 @media(max-width:420px){.calculation-steps{grid-template-columns:1fr}.calculation-steps span{display:flex;justify-content:space-between;align-items:center}.calculation-steps b{margin:0}.result-goal{margin-top:25px}}
 @media(max-width:700px){.bottom-nav{bottom:14px;gap:9px;padding:7px 8px 7px 9px}.bottom-menu{width:40px;height:40px}.bottom-nav>span{font-size:24px;margin:0 3px}.footer-signoff{margin-bottom:45px}.partner{touch-action:pan-y}.partner h2{font-size:clamp(38px,12vw,55px)}.knowledge-grid,.faq-experience,.contact-card-rich{grid-template-columns:1fr;gap:16px}.knowledge-grid article{padding:23px}.faq-experience{gap:42px}.faq-intro{position:static}.faq-intro blockquote{font-size:27px}.faq-lead{margin-top:-10px}.faq summary{gap:8px}.faq summary span{width:26px;flex-basis:26px}.contact-lead{font-size:16px;margin-top:-10px}.contact-card-copy blockquote{font-size:21px}.contact blockquote{font-size:23px}.program-quote{padding:32px 4px;font-size:26px}}
 .medical-question{margin-top:24px!important;padding:18px!important;border:1px solid rgba(246,252,255,.24)!important;border-radius:16px}.medical-question legend{padding:0 6px;font-size:13px!important}.medical-question label{display:flex!important}.medical-warning{margin:14px 0 0;padding:13px 15px;border-radius:12px;background:#fff1e8;color:#7a2d16;font-size:13px;line-height:1.5}.application-form .button.is-blocked{opacity:.45;cursor:not-allowed}.faq summary{gap:12px}.faq summary>span{width:auto;flex:1;font-family:inherit;font-size:inherit;opacity:1}.faq summary svg{flex:0 0 auto}
+
+/* Readable KБЖУ result — stronger hierarchy without changing the visual language */
+.nutrition-result{padding:42px;min-height:470px}
+.result-label{font-size:12px;line-height:1.45;letter-spacing:.015em}
+.calculation-steps small{font-size:10px;line-height:1.4}
+.calculation-steps b{font-size:14px}
+.result-goal{font-size:19px}
+.macro-grid span{font-size:13px;line-height:1.45}
+.macro-grid b{font-size:18px;margin-bottom:2px}
+.result-note{font-size:15px;line-height:1.65;color:rgba(255,255,255,.78)}
+.result-meta{gap:10px;font-size:12px;line-height:1.45}
+.daily-plan{grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:6vw;align-items:start}
+.daily-plan-content{max-width:650px}
+.daily-plan-media span{font-size:12px}
+.daily-plan-media strong{font-size:16px;line-height:1.4}
+.weighing-note{padding:20px 22px;margin-top:28px}
+.weighing-note strong{font-size:15px}
+.weighing-note p{font-size:14px;line-height:1.65;margin-top:7px;color:#465861}
+.meal-list{margin-top:36px}
+.meal-item{padding:21px 0}
+.meal-heading{margin-bottom:13px}
+.meal-heading>span{font-size:12px;line-height:1.4;letter-spacing:.025em;opacity:.68}
+.meal-heading>b{font-size:14px}
+.meal-item ul{gap:9px}
+.meal-item li,.meal-item li>span{font-size:16px;line-height:1.45}
+.meal-item li small{font-size:12px;line-height:1.4;margin-top:3px;opacity:.62}
+.meal-item li strong{font-size:15px;line-height:1.45}
+.plan-total{gap:6px;padding:18px 20px;border-radius:15px}
+.plan-total span{font-size:11px;letter-spacing:.035em;opacity:.62}
+.plan-total strong{font-size:15px;line-height:1.55}
+.plan-explanation{font-size:15px;line-height:1.7;margin:20px 0;color:#334850}
+.plan-explanation strong{color:#0d212c;font-size:16px}
+.plan-motivation{font-size:16px;line-height:1.6;padding-left:17px;margin-top:24px}
+.calculator-disclaimer{font-size:13px;line-height:1.6}
+
+@media(max-width:700px){
+  .nutrition-result{padding:30px 24px;min-height:430px}
+  .result-label{font-size:12px}
+  .result-note{font-size:14px}
+  .daily-plan{gap:40px}
+  .daily-plan-content{max-width:none}
+  .daily-plan-media>div{padding:17px 18px}
+  .weighing-note{padding:18px}
+  .weighing-note p{font-size:14px}
+  .meal-item{padding:20px 0}
+  .meal-item li,.meal-item li>span{font-size:16px}
+  .meal-item li strong{font-size:15px}
+  .plan-explanation{font-size:15px;line-height:1.68}
+}
+
+@media(max-width:700px){
+  .calculation-steps{grid-template-columns:1fr;gap:8px;margin:25px 0 12px}
+  .calculation-steps span{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:12px 13px}
+  .calculation-steps small{font-size:11px;white-space:normal}
+  .calculation-steps b{flex:0 0 auto;font-size:14px;margin:0}
+  .macro-grid{gap:10px;margin-top:30px}
+  .macro-grid span{font-size:12px}
+  .macro-grid b{font-size:18px}
+  .result-meta{font-size:12px}
+  .meal-heading{align-items:flex-start}
+  .meal-heading>span{font-size:13px;font-weight:600;color:#30454e;opacity:1}
+  .meal-heading>b{font-size:14px;padding-top:1px}
+  .meal-item ul{gap:12px}
+  .meal-item li{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;column-gap:16px}
+  .meal-item li>span{min-width:0;font-size:16px;line-height:1.5}
+  .meal-item li small{font-size:13px;line-height:1.45;margin-top:4px;color:#52616a;opacity:1}
+  .meal-item li strong{font-size:15px;padding-top:1px}
+  .plan-total strong{font-size:15px}
+}
