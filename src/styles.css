@@ -128,6 +128,11 @@ body { font-size: 17px; line-height: 1.6; }
 .plan-explanation{font-size:15px;line-height:1.7;margin:20px 0;color:#334850}
 .plan-explanation strong{color:#0d212c;font-size:16px}
 .plan-motivation{font-size:16px;line-height:1.6;padding-left:17px;margin-top:24px}
+.daily-plan-content{width:100%;min-width:0}
+.daily-plan-content .plan-explanation,
+.daily-plan-content .plan-motivation,
+.daily-plan-content .weighing-note,
+.daily-plan-content .plan-total{max-width:58ch}
 .calculator-disclaimer{font-size:13px;line-height:1.6}
 
 @media(max-width:700px){
@@ -136,6 +141,7 @@ body { font-size: 17px; line-height: 1.6; }
   .result-note{font-size:14px}
   .daily-plan{gap:40px}
   .daily-plan-content{max-width:none}
+  .daily-plan-content{padding-inline:24px}
   .daily-plan-media>div{padding:17px 18px}
   .weighing-note{padding:18px}
   .weighing-note p{font-size:14px}
