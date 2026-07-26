@@ -145,6 +145,15 @@ body { font-size: 17px; line-height: 1.6; }
   .plan-explanation{font-size:15px;line-height:1.68}
 }
 
+/* Final readability and motion pass */
+.eyebrow,.stage-number,.plan small,.activity-list small,.goal-grid small,.touch-hint,.pending-note,.faq summary span,.faq summary small{font-size:12px}
+.button,.choice-row label,.goal-grid label,.activity-list b,.goal-grid b{font-size:15px}
+.meal-heading>span{font-size:14px}
+.meal-heading>b{font-size:15px}
+.meal-item li small{font-size:13px}
+.calculator-disclaimer{font-size:14px}
+.marquee-track{animation-duration:30s}
+
 @media(max-width:700px){
   .daily-plan,
   .daily-plan-content,

@@ -6,7 +6,7 @@ import './styles.css';
 import './cinematic-mobile.css';
 
 const gallery = [
-  ...Array.from({ length: 36 }, (_, index) => `/gallery/inbound/${String(index + 1).padStart(2, '0')}.jpg`),
+  ...[1, 2, 4, 5, 6, 7, 8, 9, 10, 12, 15, 16, 17, 18, 19, 20, 21, 23, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36].map((index) => `/gallery/inbound/${String(index).padStart(2, '0')}.jpg`),
 ];
 const testimonials = [
   ['Участница марафона', 'Результат требует подтверждения', 'За время программы минус 6 кг и это без голода! Наталья всегда на связи, поддерживает и мотивирует в самые сложные моменты.', 'М'],
