@@ -176,6 +176,31 @@ body { font-size: 17px; line-height: 1.6; }
 .nutrition-grid label,.nutrition-grid label>span,.calculation-steps small,.result-meta,.daily-plan-media span,.plan-total span{font-size:13px}
 .calculator-disclaimer{font-size:15px}
 
+/* Priority reading blocks called out by the owner. */
+.program-details{grid-template-columns:.55fr 1fr 1fr;gap:42px}
+.program-details>p:not(.eyebrow){max-width:600px;font-size:18px;line-height:1.7}
+.program-details>p strong{font-weight:600}
+.editorial-intro .eyebrow{font-size:16px}
+.intro{font-size:19px;line-height:1.7;max-width:440px}
+.partner .eyebrow{font-size:17px;line-height:1.5}
+.faq summary{font-size:20px}
+.faq details p{font-size:17px;line-height:1.7;opacity:.82}
+.contact-kicker{display:inline-block;padding:9px 13px;border-radius:999px;background:#e9f0ed;font-size:17px!important;letter-spacing:.02em}
+.contact-lead{font-size:19px;line-height:1.7}
+.footer-signoff>p{font-size:18px;line-height:1.5}
+
+@media(max-width:700px){
+  .program-details{grid-template-columns:1fr;gap:22px}
+  .program-details>p:not(.eyebrow){font-size:17px;line-height:1.7}
+  .editorial-intro .eyebrow{font-size:15px}
+  .intro{font-size:18px;line-height:1.7}
+  .partner .eyebrow{font-size:16px}
+  .faq summary{font-size:19px}
+  .faq details p{font-size:16px;line-height:1.7}
+  .contact-lead{font-size:18px;line-height:1.7}
+  .footer-signoff>p{font-size:17px}
+}
+
 /* Site-wide readable minimum for supporting text. */
 body small,
 .topbar,
