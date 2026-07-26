@@ -154,6 +154,13 @@ body { font-size: 17px; line-height: 1.6; }
 .calculator-disclaimer{font-size:14px}
 .marquee-track{animation-duration:30s}
 
+/* Keep supporting copy readable without competing with display type. */
+.cinematic-kicker,.cinematic-bottom,.drawer-links a span,.stage-number,.plan small,.fact-row small,.pending-note,.touch-hint,.contact footer{font-size:13px}
+.eyebrow,.topbar,.rating,.application-form label,.application-form legend,.application-form .consent,.form-status,.faq summary span{font-size:13px}
+.knowledge-grid span,.knowledge-grid p,.inner-stage-grid article > span,.inner-stage-grid strong,.activity-list small,.goal-grid small{font-size:13px}
+.nutrition-grid label,.nutrition-grid label>span,.calculation-steps small,.result-meta,.daily-plan-media span,.plan-total span{font-size:13px}
+.calculator-disclaimer{font-size:15px}
+
 @media(max-width:700px){
   .daily-plan,
   .daily-plan-content,
