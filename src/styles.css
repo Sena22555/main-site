@@ -166,12 +166,14 @@ body { font-size: 17px; line-height: 1.6; }
   .macro-grid b{font-size:18px}
   .result-meta{font-size:12px}
   .meal-heading{align-items:flex-start}
-  .meal-heading>span{font-size:13px;font-weight:600;color:#30454e;opacity:1}
-  .meal-heading>b{font-size:14px;padding-top:1px}
+  .meal-heading>span{font-size:15px;line-height:1.4;font-weight:600;color:#30454e;opacity:1}
+  .meal-heading>b{font-size:15px;padding-top:1px}
   .meal-item ul{gap:12px}
   .meal-item li{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;column-gap:16px}
   .meal-item li>span{min-width:0;font-size:16px;line-height:1.5}
-  .meal-item li small{font-size:13px;line-height:1.45;margin-top:4px;color:#52616a;opacity:1}
-  .meal-item li strong{font-size:15px;padding-top:1px}
-  .plan-total strong{font-size:15px}
+  .meal-item li small{font-size:14px;line-height:1.45;margin-top:4px;color:#52616a;opacity:1}
+  .meal-item li strong{font-size:16px;padding-top:1px}
+  .plan-total strong{font-size:16px}
+  .plan-explanation{font-size:16px;line-height:1.7}
+  .weighing-note p{font-size:15px;line-height:1.65}
 }
