@@ -151,6 +151,15 @@ body { font-size: 17px; line-height: 1.6; }
   .plan-explanation{font-size:15px;line-height:1.68}
 }
 
+/* Must stay last: late mobile rules must not shrink readable text again. */
+.medical-question legend{font-size:14px!important}
+@media(max-width:700px){
+  .calculation-steps small,
+  .macro-grid span,
+  .result-meta,
+  .result-label{font-size:14px}
+}
+
 /* Final readability and motion pass */
 .eyebrow,.stage-number,.plan small,.activity-list small,.goal-grid small,.touch-hint,.pending-note,.faq summary span,.faq summary small{font-size:12px}
 .button,.choice-row label,.goal-grid label,.activity-list b,.goal-grid b{font-size:15px}
@@ -166,6 +175,48 @@ body { font-size: 17px; line-height: 1.6; }
 .knowledge-grid span,.knowledge-grid p,.inner-stage-grid article > span,.inner-stage-grid strong,.activity-list small,.goal-grid small{font-size:13px}
 .nutrition-grid label,.nutrition-grid label>span,.calculation-steps small,.result-meta,.daily-plan-media span,.plan-total span{font-size:13px}
 .calculator-disclaimer{font-size:15px}
+
+/* Site-wide readable minimum for supporting text. */
+body small,
+.topbar,
+.eyebrow,
+.cinematic-kicker,
+.cinematic-bottom,
+.drawer-links a span,
+.stage-number,
+.plan small,
+.rating,
+.author small,
+.fact-row small,
+.inner-stage-grid article>span,
+.inner-stage-grid strong,
+.pending-note,
+.touch-hint,
+.knowledge-grid span,
+.application-form label,
+.application-form legend,
+.application-form .consent,
+.form-status,
+.faq summary span,
+.contact footer,
+.nutrition-form legend,
+.nutrition-grid label,
+.nutrition-grid label>span,
+.activity-list small,
+.goal-grid small,
+.result-label,
+.calculation-steps small,
+.macro-grid span,
+.result-meta,
+.daily-plan-media span,
+.plan-total span{font-size:14px}
+
+.knowledge-grid p,
+.inner-stage-grid strong,
+.pending-note,
+.application-intro ul,
+.calculator-method,
+.result-note{font-size:15px}
 
 @media(max-width:700px){
   .daily-plan,
@@ -198,4 +249,13 @@ body { font-size: 17px; line-height: 1.6; }
   .plan-total strong{font-size:16px}
   .plan-explanation{font-size:16px;line-height:1.7}
   .weighing-note p{font-size:15px;line-height:1.65}
+}
+
+/* Absolute final minimum after all responsive overrides. */
+.medical-question legend{font-size:14px!important}
+@media(max-width:700px){
+  .nutrition-result .result-label,
+  .nutrition-result .calculation-steps small,
+  .nutrition-result .macro-grid span,
+  .nutrition-result .result-meta{font-size:14px}
 }
