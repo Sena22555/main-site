@@ -6,11 +6,7 @@ import './styles.css';
 import './cinematic-mobile.css';
 
 const gallery = [
-  '/gallery/omelet-avocado.jpg',
-  '/gallery/green-pancake.jpg',
-  '/gallery/omelet-vegetables.jpg',
-  '/gallery/chicken-pasta-light.jpg',
-  '/gallery/chicken-vegetables.jpg',
+  ...Array.from({ length: 36 }, (_, index) => `/gallery/inbound/${String(index + 1).padStart(2, '0')}.jpg`),
 ];
 const testimonials = [
   ['Участница марафона', 'Результат требует подтверждения', 'За время программы минус 6 кг и это без голода! Наталья всегда на связи, поддерживает и мотивирует в самые сложные моменты.', 'М'],

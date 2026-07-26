@@ -146,6 +146,17 @@ body { font-size: 17px; line-height: 1.6; }
 }
 
 @media(max-width:700px){
+  .daily-plan,
+  .daily-plan-content,
+  .meal-list,
+  .meal-item,
+  .meal-item ul,
+  .meal-item li{width:100%;min-width:0;max-width:100%;}
+  .daily-plan{display:grid;grid-template-columns:minmax(0,1fr);overflow:hidden;}
+  .meal-item li{grid-template-columns:minmax(0,1fr) max-content;overflow-wrap:anywhere;}
+  .meal-item li>span{overflow-wrap:anywhere;word-break:normal;}
+  .meal-item li strong{max-width:5.5em;white-space:normal;overflow-wrap:anywhere;}
+  .plan-explanation,.plan-motivation,.weighing-note,.plan-total{max-width:100%;overflow-wrap:anywhere;}
   .calculation-steps{grid-template-columns:1fr;gap:8px;margin:25px 0 12px}
   .calculation-steps span{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:12px 13px}
   .calculation-steps small{font-size:11px;white-space:normal}
