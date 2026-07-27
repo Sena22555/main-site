@@ -213,20 +213,22 @@ function shouldTriggerStart(update) {
 
 function startMessage() {
   return {
-    text: 'Привет, я Наталья 💫\n\nМарафон «Сильные девочки» — это понятная система питания, поддержка и движение к лёгкости без жёстких ограничений и чувства вины.\n\nВыбери, что хочешь узнать, или открой главный сайт 👇',
+    text: 'Привет, я Наталья 💫\n\n«Умный путь к стройности» — это сопровождение, контроль, обратная связь и понятные привычки для обычной жизни. Не марафон на силу воли, а система, которую легче поддерживать.\n\nВыбери, с чего начать 👇',
     attachments: [
       ...heroAttachment(),
       ...buildKeyboard([
-        [
-          { type: 'link', text: 'Рассчитать калории', url: CALCULATOR_URL },
-          { type: 'link', text: 'Подать заявку', url: APPLICATION_URL }
-        ],
-        [
-          { type: 'link', text: 'Открыть главный сайт', url: MINI_APP_URL }
-        ],
+        [{ type: 'link', text: 'Бесплатный расчёт КБЖУ', url: CALCULATOR_URL }],
         [
           { type: 'callback', text: 'О Наталье', payload: 'about' },
-          { type: 'callback', text: 'Программа', payload: 'marathon' }
+          { type: 'callback', text: 'О программе', payload: 'marathon' }
+        ],
+        [
+          { type: 'callback', text: 'Отзывы', payload: 'reviews' },
+          { type: 'callback', text: 'Стоимость', payload: 'price' }
+        ],
+        [
+          { type: 'link', text: 'Открыть сайт', url: MINI_APP_URL },
+          { type: 'callback', text: 'Подать заявку', payload: 'apply' }
         ]
       ])
     ],
@@ -236,143 +238,95 @@ function startMessage() {
 
 function calculatorMessage() {
   return {
-    text: 'Рассчитай свою норму калорий и КБЖУ 💫\n\nКалькулятор сначала определит базальный обмен (BMR), затем учтёт физическую активность и цель: похудение, поддержание или набор массы.',
+    text: 'Бесплатно рассчитай ориентир по калориям и КБЖУ 💫\n\nКалькулятор определит базовый обмен, учтёт активность и цель, а затем покажет пример сбалансированного рациона. Расчёт подходит здоровым взрослым и не заменяет консультацию врача.',
     attachments: buildKeyboard([
-      [{ type: 'link', text: 'Рассчитать калории', url: CALCULATOR_URL }],
-      [{ type: 'callback', text: 'Назад', payload: 'start' }]
+      [{ type: 'link', text: 'Рассчитать КБЖУ бесплатно', url: CALCULATOR_URL }],
+      [{ type: 'callback', text: 'Назад в главное меню', payload: 'start' }]
     ])
   };
 }
 
 function aboutMessage() {
   return {
-    text: 'Привет! Меня зовут Наталья, мне 48 лет, я дипломированный нутрициолог 💫\n\nПомогаю девушкам худеть без жёстких диет, срывов и чувства вины — вернуть лёгкость, уверенность, энергию и полезные привычки. Провожу этот путь мягко, с поддержкой и по понятной системе.',
+    text: 'Меня зовут Наталья, мне 48 лет. Я дипломированный нутрициолог и наставник 💫\n\nПомогаю выстроить питание без жёстких диет, тревоги и чувства вины. Вместо чужого меню мы разбираемся в продуктах, порциях и сигналах тела — чтобы ты могла уверенно собирать рацион под свою жизнь.',
     attachments: buildKeyboard([
-      [{ type: 'link', text: 'Открыть страницу о Наталье', url: ABOUT_URL }],
-      [{ type: 'callback', text: 'Темы марафона', payload: 'inside' }],
-      [{ type: 'link', text: 'Заполнить анкету', url: APPLICATION_URL }],
-      [
-        { type: 'callback', text: 'Назад', payload: 'start' }
-      ]
+      [{ type: 'link', text: 'Подробнее о Наталье', url: ABOUT_URL }],
+      [{ type: 'callback', text: 'О программе', payload: 'marathon' }],
+      [{ type: 'callback', text: 'Назад в главное меню', payload: 'start' }]
     ])
   };
 }
 
 function marathonMessage() {
   return {
-    text: '«Сильные девочки» — это путь из трёх этапов 💫\n\nЧто тебя ждёт:\n• персональный план питания\n• ежедневное сопровождение\n• контроль и обратная связь\n• понятные привычки для обычной жизни\n\nЭто не марафон на силу воли, а система, которую легче поддерживать.',
+    text: '«Умный путь к стройности» 💫\n\nСопровождение, контроль, обратная связь и понятные привычки для обычной жизни. Это не марафон на силу воли, а система, которую легче поддерживать.\n\nЧто разбираем:\n• сигналы голода и сытости\n• роль инсулина, лептина и грелина\n• простые и сложные углеводы\n• полезные жиры и белки\n• сбалансированную тарелку и замены продуктов\n• зелень, овощи и питьевой режим\n\nТы учишься выбирать продукты без тревоги и самостоятельно собирать рацион под свой вкус, цель и распорядок дня.',
     attachments: buildKeyboard([
       [
         { type: 'callback', text: 'Стоимость', payload: 'price' },
-        { type: 'link', text: 'Открыть программу', url: MARATHON_URL }
+        { type: 'link', text: 'Программа на сайте', url: MARATHON_URL }
       ],
       [
         { type: 'callback', text: 'Отзывы', payload: 'reviews' },
-        { type: 'link', text: 'Подать заявку', url: APPLICATION_URL }
+        { type: 'callback', text: 'Подать заявку', payload: 'apply' }
       ],
-      [
-        { type: 'link', text: 'Открыть страницу программы', url: MARATHON_URL }
-      ],
-      [
-        { type: 'callback', text: 'Назад', payload: 'start' }
-      ]
+      [{ type: 'link', text: 'Бесплатный расчёт КБЖУ', url: CALCULATOR_URL }],
+      [{ type: 'callback', text: 'Назад в главное меню', payload: 'start' }]
     ])
   };
 }
 
+// Keep the legacy callback working, but show the single combined program page.
 function insideMessage() {
-  return {
-    text: 'Темы и поддержка марафона 👇\n\n• белки, жиры и углеводы — простым языком\n• индивидуальная суточная норма КБЖУ\n• рацион под твои вкусы и образ жизни\n• сбалансированная тарелка на каждый день\n• инсулин, лептин и грелин: как связаны с голодом и сытостью\n• простые и сложные углеводы, полезные жиры и белки\n• как замечать трансжиры и продукты с искусственными добавками\n\nВнутри — моя личная обратная связь по рациону и закрытый чат с участницами. После марафона по желанию можно продолжить сопровождение ещё месяц, чтобы закрепить привычки.',
-    attachments: buildKeyboard([
-      [
-        { type: 'callback', text: 'Стоимость', payload: 'price' },
-        { type: 'link', text: 'Открыть программу', url: MARATHON_URL }
-      ],
-      [
-        { type: 'link', text: 'Подать заявку', url: APPLICATION_URL },
-        { type: 'callback', text: 'О программе', payload: 'marathon' }
-      ],
-      [
-        { type: 'callback', text: 'Назад', payload: 'start' }
-      ]
-    ])
-  };
+  return marathonMessage();
 }
 
 function priceMessage() {
   return {
-    text: 'Стоимость участия — 6 000 ₽ 💫\n\nВ программу входят персональное меню, сопровождение, обратная связь, чат и материалы марафона.\n\nЭто не просто список блюд, а система и поддержка на пути.',
+    text: 'Стоимость программы — 6 000 ₽ 💫\n\nВ стоимость входят сопровождение, ежедневная обратная связь, разбор рациона, групповой чат и учебные материалы.\n\nГлавный результат — не список блюд, а навык самостоятельно собирать питание, которое подходит тебе.',
     attachments: buildKeyboard([
       [
-        { type: 'link', text: 'Подать заявку', url: APPLICATION_URL },
-        { type: 'link', text: 'Контакты', url: CONTACTS_URL }
+        { type: 'callback', text: 'Подать заявку', payload: 'apply' },
+        { type: 'callback', text: 'О программе', payload: 'marathon' }
       ],
       [
         { type: 'link', text: 'Отзывы на сайте', url: REVIEWS_URL },
-        { type: 'callback', text: 'О Наталье', payload: 'about' }
+        { type: 'link', text: 'Контакты', url: CONTACTS_URL }
       ],
-      [
-        { type: 'callback', text: 'Назад', payload: 'start' }
-      ]
+      [{ type: 'callback', text: 'Назад в главное меню', payload: 'start' }]
     ])
   };
 }
 
 function reviewsMessage() {
   return {
-    text: 'Отзывы участниц ✨\n\nНа сайте собраны отзывы и истории участниц. Открой страницу, чтобы познакомиться с ними и узнать больше о формате марафона.',
+    text: 'Отзывы участниц ✨\n\nНа сайте собраны истории о формате, поддержке и изменениях в питании. Открой страницу, чтобы посмотреть отзывы и понять, подходит ли тебе программа.',
     attachments: buildKeyboard([
       [
-        { type: 'callback', text: 'Хочу так же', payload: 'apply' },
-        { type: 'callback', text: 'О марафоне', payload: 'marathon' }
+        { type: 'link', text: 'Посмотреть отзывы', url: REVIEWS_URL },
+        { type: 'callback', text: 'О программе', payload: 'marathon' }
       ],
-      [
-        { type: 'callback', text: 'О Наталье', payload: 'about' },
-        { type: 'link', text: 'Отзывы на сайте', url: REVIEWS_URL }
-      ],
-      [
-        { type: 'callback', text: 'Назад', payload: 'start' }
-      ]
+      [{ type: 'callback', text: 'Подать заявку', payload: 'apply' }],
+      [{ type: 'callback', text: 'Назад в главное меню', payload: 'start' }]
     ])
   };
 }
 
 function applyMessage() {
   return {
-    text: 'Готова начать? 💫\n\nЗаполни анкету на сайте. Данные попадут в онлайн-таблицу, а после проверки с тобой свяжутся по указанным контактам.',
+    text: 'Готова сделать первый шаг? 💫\n\nЗаполни короткую анкету на сайте. Наталья прочитает ответы лично, уточнит твою цель и честно скажет, подходит ли тебе программа.',
     attachments: buildKeyboard([
+      [{ type: 'link', text: 'Заполнить анкету', url: APPLICATION_URL }],
       [
-        { type: 'link', text: 'Заполнить анкету на сайте', url: APPLICATION_URL }
-      ],
-      [
-        { type: 'callback', text: 'Что входит', payload: 'inside' },
+        { type: 'callback', text: 'О программе', payload: 'marathon' },
         { type: 'callback', text: 'Стоимость', payload: 'price' }
       ],
-      [
-        { type: 'callback', text: 'Назад', payload: 'start' }
-      ]
+      [{ type: 'callback', text: 'Назад в главное меню', payload: 'start' }]
     ])
   };
 }
 
 function fallbackMessage() {
-  return {
-    text: 'Выбери, что тебе сейчас интересно 👇',
-    attachments: buildKeyboard([
-      [
-        { type: 'callback', text: 'О Наталье', payload: 'about' },
-        { type: 'callback', text: 'О марафоне', payload: 'marathon' }
-      ],
-      [
-        { type: 'callback', text: 'Что входит', payload: 'inside' },
-        { type: 'callback', text: 'Отзывы', payload: 'reviews' }
-      ],
-      [
-        { type: 'link', text: 'Рассчитать калории', url: CALCULATOR_URL },
-        { type: 'callback', text: 'Подать заявку', payload: 'apply' }
-      ]
-    ])
-  };
+  return startMessage();
 }
 
 function dailyPromptMessage() {
@@ -405,7 +359,7 @@ function praiseMessage() {
       ...heroAttachment('https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=1200&q=80'),
       ...buildKeyboard([
         [
-          { type: 'callback', text: 'О марафоне', payload: 'marathon' },
+          { type: 'callback', text: 'О программе', payload: 'marathon' },
           { type: 'callback', text: 'Подать заявку', payload: 'apply' }
         ],
         [
@@ -421,12 +375,10 @@ function nudgeMessage() {
     text: 'Ничего страшного 💛\n\nИногда начать сложнее всего. Если хочешь, я помогу сделать это мягко и без срывов.',
     attachments: buildKeyboard([
       [
-        { type: 'callback', text: 'О марафоне', payload: 'marathon' },
-        { type: 'callback', text: 'Что входит', payload: 'inside' }
-      ],
-      [
+        { type: 'callback', text: 'О программе', payload: 'marathon' },
         { type: 'callback', text: 'Подать заявку', payload: 'apply' }
       ],
+      [{ type: 'link', text: 'Бесплатный расчёт КБЖУ', url: CALCULATOR_URL }],
       [
         { type: 'callback', text: 'Больше не напоминать', payload: 'unsubscribe_daily' }
       ]
@@ -453,7 +405,7 @@ function subscribedAgainMessage() {
     text: 'Готово ✨\n\nЯ снова буду присылать мягкие утренние напоминания.',
     attachments: buildKeyboard([
       [
-        { type: 'callback', text: 'О марафоне', payload: 'marathon' },
+        { type: 'callback', text: 'О программе', payload: 'marathon' },
         { type: 'callback', text: 'Подать заявку', payload: 'apply' }
       ],
       [
@@ -667,7 +619,7 @@ async function handleUpdate(update) {
       return sendMessageToUpdate(update, calculatorMessage());
     }
 
-    if (normalized.includes('марафон')) {
+    if (normalized.includes('марафон') || normalized.includes('программ')) {
       return sendMessageToUpdate(update, marathonMessage());
     }
 
