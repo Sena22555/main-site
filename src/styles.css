@@ -283,3 +283,20 @@ body small,
   .nutrition-result .macro-grid span,
   .nutrition-result .result-meta{font-size:14px}
 }
+
+/* FAQ: keep every supporting line comfortably readable. */
+.faq-page-hero .eyebrow{font-size:16px}
+.faq-page-hero>div>p:not(.eyebrow){font-size:20px;line-height:1.7}
+.faq-intro .eyebrow{font-size:16px;line-height:1.6}
+.faq-intro blockquote{font-size:clamp(30px,3vw,44px);line-height:1.32}
+.faq-experience summary{font-size:21px;line-height:1.45}
+.faq-experience details p{font-size:18px;line-height:1.75;opacity:.88}
+
+@media(max-width:700px){
+  .faq-page-hero .eyebrow,
+  .faq-intro .eyebrow{font-size:15px}
+  .faq-page-hero>div>p:not(.eyebrow){font-size:18px;line-height:1.7}
+  .faq-intro blockquote{font-size:30px;line-height:1.35}
+  .faq-experience summary{font-size:19px;line-height:1.45}
+  .faq-experience details p{font-size:17px;line-height:1.75}
+}
