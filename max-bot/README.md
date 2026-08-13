@@ -48,8 +48,20 @@ The bot links to the primary website at `https://new-site-kappa-eight.vercel.app
 
 - `MAX_BOT_TOKEN`
 - `MAX_WEBHOOK_SECRET`
+- `ADMIN_SECRET`
 - `MAX_API_BASE`
 - `WEBHOOK_URL`
+- `DAILY_SECRET` when `DAILY_SEND_ENABLED=true`
 - optional daily-message settings from `.env.max-bot.example`
+
+The webhook, daily-send, webhook-registration, and subscriber-count endpoints
+require constant-time secret header authentication. Use `x-max-bot-api-secret`
+for `/webhook`, `x-daily-secret` for `/send-daily`, and `x-admin-secret` for
+`/register-webhook` and `/subscribers`. Registration always uses configured
+`WEBHOOK_URL` and `MAX_WEBHOOK_SECRET`; request-provided URL and secret values
+are ignored. `/subscribers` returns counts only.
+
+Subscriber data is written atomically with file mode `0600`. Logs and external
+error responses do not include request, API, or message payloads.
 
 Never commit real tokens or secrets.

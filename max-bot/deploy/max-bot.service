@@ -1,0 +1,22 @@
+[Unit]
+Description=SmartSlimWay MAX bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/max-bot
+ExecStart=/usr/bin/node /opt/max-bot/max-bot.js
+EnvironmentFile=/etc/max-bot/max-bot.env
+Restart=on-failure
+RestartSec=5
+User=maxbot
+Group=maxbot
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/max-bot/data
+
+[Install]
+WantedBy=multi-user.target

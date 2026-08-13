@@ -2,12 +2,14 @@ const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { URL } = require('url');
 
 const PORT = process.env.PORT || 8787;
 const MAX_API_BASE = process.env.MAX_API_BASE || 'https://platform-api2.max.ru';
 const MAX_BOT_TOKEN = process.env.MAX_BOT_TOKEN;
 const MAX_WEBHOOK_SECRET = process.env.MAX_WEBHOOK_SECRET || '';
+const ADMIN_SECRET = process.env.ADMIN_SECRET || '';
 const MAX_CA_CERT_PEM = process.env.MAX_CA_CERT_PEM || '';
 const MAX_TLS_INSECURE = process.env.MAX_TLS_INSECURE === 'true';
 const DAILY_SEND_ENABLED = process.env.DAILY_SEND_ENABLED === 'true';
@@ -49,13 +51,24 @@ if (!MAX_BOT_TOKEN) {
   process.exit(1);
 }
 
+const missingSecrets = [
+  ['MAX_WEBHOOK_SECRET', MAX_WEBHOOK_SECRET],
+  ['ADMIN_SECRET', ADMIN_SECRET],
+  ...(DAILY_SEND_ENABLED ? [['DAILY_SECRET', DAILY_SECRET]] : [])
+].filter(([, value]) => !value).map(([name]) => name);
+if (missingSecrets.length) {
+  console.error(`Missing required secret environment variable(s): ${missingSecrets.join(', ')}`);
+  process.exit(1);
+}
+
 function ensureStorage() {
   if (!fs.existsSync(STORAGE_DIR)) {
     fs.mkdirSync(STORAGE_DIR, { recursive: true });
   }
   if (!fs.existsSync(SUBSCRIBERS_FILE)) {
-    fs.writeFileSync(SUBSCRIBERS_FILE, '[]\n', 'utf8');
+    fs.writeFileSync(SUBSCRIBERS_FILE, '[]\n', { encoding: 'utf8', mode: 0o600 });
   }
+  fs.chmodSync(SUBSCRIBERS_FILE, 0o600);
 }
 
 function readSubscribers() {
@@ -69,7 +82,25 @@ function readSubscribers() {
 
 function writeSubscribers(items) {
   ensureStorage();
-  fs.writeFileSync(SUBSCRIBERS_FILE, `${JSON.stringify(items, null, 2)}\n`, 'utf8');
+  const temporaryFile = `${SUBSCRIBERS_FILE}.${process.pid}.${crypto.randomBytes(8).toString('hex')}.tmp`;
+  try {
+    fs.writeFileSync(temporaryFile, `${JSON.stringify(items, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });
+    fs.chmodSync(temporaryFile, 0o600);
+    fs.renameSync(temporaryFile, SUBSCRIBERS_FILE);
+    fs.chmodSync(SUBSCRIBERS_FILE, 0o600);
+  } catch (error) {
+    try { fs.unlinkSync(temporaryFile); } catch {}
+    throw error;
+  }
+}
+
+function hasValidSecret(req, headerName, expected) {
+  const supplied = req.headers[headerName];
+  if (typeof supplied !== 'string' || !expected) return false;
+  const suppliedBuffer = Buffer.from(supplied);
+  const expectedBuffer = Buffer.from(expected);
+  return suppliedBuffer.length === expectedBuffer.length
+    && crypto.timingSafeEqual(suppliedBuffer, expectedBuffer);
 }
 
 function upsertSubscriber(update) {
@@ -505,7 +536,7 @@ function apiRequest(method, pathWithQuery, body) {
             resolve({ raw: data });
           }
         } else {
-          reject(new Error(`MAX API ${res.statusCode}: ${data}`));
+          reject(new Error(`MAX API request failed with status ${res.statusCode}`));
         }
       });
     });
@@ -530,7 +561,6 @@ async function sendMessageByQuery(query, messageBody) {
     payload.format = messageBody.format;
   }
 
-  console.log('Outgoing MAX payload:', JSON.stringify(payload));
   return apiRequest('POST', `/messages?${query}`, payload);
 }
 
@@ -549,7 +579,6 @@ async function answerCallback(update, messageBody) {
   }
 
   const payload = { message: buildOutgoingMessage(messageBody) };
-  console.log('Updating MAX callback message:', JSON.stringify({ callbackId, payload }));
   return apiRequest('POST', `/answers?callback_id=${encodeURIComponent(callbackId)}`, payload);
 }
 
@@ -574,7 +603,7 @@ async function sendDailyPrompts() {
       const result = await sendMessageByQuery(buildRecipientQuery(item), dailyPromptMessage());
       results.push({ target: item.key, ok: true, result });
     } catch (error) {
-      results.push({ target: item.key, ok: false, error: error.message });
+      results.push({ target: item.key, ok: false, error: 'Message delivery failed' });
     }
   }
 
@@ -656,60 +685,62 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === 'POST' && req.url === '/webhook') {
     try {
-      if (MAX_WEBHOOK_SECRET) {
-        const secret = req.headers['x-max-bot-api-secret'];
-        if (secret !== MAX_WEBHOOK_SECRET) {
-          return sendJson(res, 401, { ok: false, error: 'Invalid secret' });
-        }
+      if (!hasValidSecret(req, 'x-max-bot-api-secret', MAX_WEBHOOK_SECRET)) {
+        return sendJson(res, 401, { ok: false, error: 'Unauthorized' });
       }
 
       const update = await parseJsonBody(req);
-      console.log('MAX webhook update:', JSON.stringify(update));
       sendJson(res, 200, { ok: true });
       handleUpdate(update).catch(error => {
         console.error('Failed to handle update:', error);
       });
       return;
     } catch (error) {
-      console.error('Webhook error:', error);
-      return sendJson(res, 400, { ok: false, error: error.message });
+      console.error('Webhook request failed:', error.message);
+      return sendJson(res, 400, { ok: false, error: 'Invalid request' });
     }
   }
 
   if (req.method === 'POST' && req.url === '/register-webhook') {
     try {
+      if (!hasValidSecret(req, 'x-admin-secret', ADMIN_SECRET)) {
+        return sendJson(res, 401, { ok: false, error: 'Unauthorized' });
+      }
+      if (!WEBHOOK_URL) {
+        return sendJson(res, 503, { ok: false, error: 'Webhook is not configured' });
+      }
       const body = await parseJsonBody(req);
       const result = await apiRequest('POST', '/subscriptions', {
-        url: body.url,
+        url: WEBHOOK_URL,
         update_types: body.update_types || ['bot_started', 'message_created', 'message_callback'],
-        ...(body.secret ? { secret: body.secret } : {})
+        secret: MAX_WEBHOOK_SECRET
       });
       return sendJson(res, 200, result);
     } catch (error) {
-      console.error('Register webhook error:', error);
-      return sendJson(res, 500, { ok: false, error: error.message });
+      console.error('Register webhook failed:', error.message);
+      return sendJson(res, 502, { ok: false, error: 'Webhook registration failed' });
     }
   }
 
   if (req.method === 'POST' && req.url === '/send-daily') {
     try {
-      if (DAILY_SECRET) {
-        const secret = req.headers['x-daily-secret'];
-        if (secret !== DAILY_SECRET) {
-          return sendJson(res, 401, { ok: false, error: 'Invalid daily secret' });
-        }
+      if (!hasValidSecret(req, 'x-daily-secret', DAILY_SECRET)) {
+        return sendJson(res, 401, { ok: false, error: 'Unauthorized' });
       }
 
       const result = await sendDailyPrompts();
       return sendJson(res, 200, result);
     } catch (error) {
-      console.error('Daily send error:', error);
-      return sendJson(res, 500, { ok: false, error: error.message });
+      console.error('Daily send failed:', error.message);
+      return sendJson(res, 502, { ok: false, error: 'Daily send failed' });
     }
   }
 
   if (req.method === 'GET' && req.url === '/subscribers') {
-    return sendJson(res, 200, { total: readSubscribers().length, active: activeSubscribers().length, items: readSubscribers() });
+    if (!hasValidSecret(req, 'x-admin-secret', ADMIN_SECRET)) {
+      return sendJson(res, 401, { ok: false, error: 'Unauthorized' });
+    }
+    return sendJson(res, 200, { total: readSubscribers().length, active: activeSubscribers().length });
   }
 
   sendJson(res, 404, { ok: false, error: 'Not found' });
@@ -726,9 +757,23 @@ server.listen(PORT, () => {
       url: WEBHOOK_URL,
       update_types: ['bot_started', 'message_created', 'message_callback'],
       secret: MAX_WEBHOOK_SECRET
-    }).then(result => console.log(`MAX webhook registered: ${WEBHOOK_URL}`, JSON.stringify(result)))
+    }).then(() => console.log(`MAX webhook registered: ${WEBHOOK_URL}`))
       .catch(error => console.error(`MAX webhook registration failed for ${WEBHOOK_URL}:`, error.message));
   } else {
-    console.warn('MAX webhook auto-registration skipped: set WEBHOOK_URL and MAX_WEBHOOK_SECRET');
+    console.warn('MAX webhook auto-registration skipped: set WEBHOOK_URL');
   }
 });
+
+function shutdown(signal) {
+  console.log(`Received ${signal}; shutting down`);
+  server.close(error => {
+    if (error) {
+      console.error('Shutdown failed:', error.message);
+      process.exitCode = 1;
+    }
+    process.exit();
+  });
+}
+
+process.once('SIGTERM', () => shutdown('SIGTERM'));
+process.once('SIGINT', () => shutdown('SIGINT'));
