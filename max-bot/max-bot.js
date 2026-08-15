@@ -21,7 +21,14 @@ const MEDIA_FILES = new Map([
   ['hero-balanced.jpg', 'image/jpeg'],
   ['main-menu.jpg', 'image/jpeg'],
   ['program.jpg', 'image/jpeg'],
-  ['about-natalia.jpg', 'image/jpeg']
+  ['about-natalia.jpg', 'image/jpeg'],
+  ['price-marathon.jpg', 'image/jpeg'],
+  ['review-01.jpg', 'image/jpeg'],
+  ['review-02.jpg', 'image/jpeg'],
+  ['review-03.jpg', 'image/jpeg'],
+  ['review-04.jpg', 'image/jpeg'],
+  ['review-05.jpg', 'image/jpeg'],
+  ['review-06.jpg', 'image/jpeg']
 ]);
 const BUNDLED_MAX_CA_FILE = path.join(__dirname, 'certs', 'russian-trusted-root-ca.pem');
 const MAX_CA = MAX_CA_CERT_PEM
@@ -59,6 +66,8 @@ const HERO_IMAGE_URL = normalizeLink(process.env.HERO_IMAGE_URL || 'https://45-1
 const MAIN_MENU_IMAGE_URL = normalizeLink(process.env.MAIN_MENU_IMAGE_URL || 'https://45-138-157-79.sslip.io/media/main-menu.jpg');
 const PROGRAM_IMAGE_URL = normalizeLink(process.env.PROGRAM_IMAGE_URL || 'https://45-138-157-79.sslip.io/media/program.jpg');
 const ABOUT_IMAGE_URL = normalizeLink(process.env.ABOUT_IMAGE_URL || 'https://45-138-157-79.sslip.io/media/about-natalia.jpg');
+const PRICE_IMAGE_URL = normalizeLink(process.env.PRICE_IMAGE_URL || 'https://45-138-157-79.sslip.io/media/price-marathon.jpg');
+const VPS_MEDIA_ORIGIN = normalizeLink(process.env.VPS_MEDIA_ORIGIN || 'https://45-138-157-79.sslip.io');
 const DAILY_PROMPT_TEXT = process.env.DAILY_PROMPT_TEXT || 'Доброе утро ✨\n\nНу что, уже делаешь шаг к своей стройности? 🌿';
 const DAILY_WINDOW_LABEL = process.env.DAILY_WINDOW_LABEL || 'с 10:00 до 12:00';
 const WEBHOOK_URL = normalizeLink(process.env.WEBHOOK_URL || (process.env.RENDER_EXTERNAL_URL ? `${process.env.RENDER_EXTERNAL_URL}/webhook` : ''));
@@ -265,16 +274,15 @@ function startMessage() {
     attachments: [
       ...heroAttachment(MAIN_MENU_IMAGE_URL),
       ...buildKeyboard([
-        [{ type: 'link', text: '🧮 Бесплатный расчёт КБЖУ', url: CALCULATOR_URL }],
+        [{ type: 'callback', text: 'Всё бесплатно', payload: 'calculator' }],
         [
-          { type: 'callback', text: 'О программе', payload: 'marathon' },
-          { type: 'callback', text: 'Стоимость', payload: 'price' }
+          { type: 'link', text: 'Расчёт', url: CALCULATOR_URL },
+          { type: 'callback', text: 'Программа', payload: 'marathon' }
         ],
         [
-          { type: 'callback', text: 'Отзывы', payload: 'reviews' },
-          { type: 'callback', text: 'О Наталье', payload: 'about' }
-        ],
-        [{ type: 'link', text: 'Подать заявку', url: APPLICATION_URL }]
+          { type: 'link', text: 'Отзывы', url: REVIEWS_URL },
+          { type: 'link', text: 'Подать заявку', url: APPLICATION_URL }
+        ]
       ])
     ],
     format: 'markdown'
@@ -286,7 +294,7 @@ function calculatorMessage() {
     text: 'Бесплатно рассчитай ориентир по калориям и КБЖУ 💫\n\nКалькулятор определит базовый обмен, учтёт активность и цель, а затем покажет пример сбалансированного рациона. Расчёт подходит здоровым взрослым и не заменяет консультацию врача.',
     attachments: buildKeyboard([
       [{ type: 'link', text: 'Рассчитать КБЖУ бесплатно', url: CALCULATOR_URL }],
-      [{ type: 'callback', text: 'Назад в главное меню', payload: 'start' }]
+      [{ type: 'callback', text: 'В меню', payload: 'start' }]
     ])
   };
 }
@@ -313,12 +321,15 @@ function marathonMessage() {
       ...buildKeyboard([
         [
           { type: 'callback', text: 'Стоимость', payload: 'price' },
-          { type: 'callback', text: 'Отзывы', payload: 'reviews' }
+          { type: 'link', text: 'Отзывы', url: REVIEWS_URL }
         ],
         [{ type: 'link', text: 'Программа на сайте', url: MARATHON_URL }],
-        [{ type: 'link', text: 'Бесплатный расчёт КБЖУ', url: CALCULATOR_URL }],
-        [{ type: 'callback', text: 'Подать заявку', payload: 'apply' }],
-        [{ type: 'callback', text: 'Назад в главное меню', payload: 'start' }]
+        [
+          { type: 'link', text: 'Подать заявку', url: APPLICATION_URL },
+          { type: 'callback', text: 'Всё бесплатно', payload: 'calculator' }
+        ],
+        [{ type: 'link', text: 'Расчёт', url: CALCULATOR_URL }],
+        [{ type: 'callback', text: 'В меню', payload: 'start' }]
       ])
     ]
   };
@@ -331,32 +342,35 @@ function insideMessage() {
 
 function priceMessage() {
   return {
-    text: 'Стоимость программы — 6 000 ₽ 💫\n\nВ стоимость входят сопровождение, ежедневная обратная связь, разбор рациона, групповой чат и учебные материалы.\n\nГлавный результат — не список блюд, а навык самостоятельно собирать питание, которое подходит тебе.',
-    attachments: buildKeyboard([
-      [
-        { type: 'callback', text: 'Подать заявку', payload: 'apply' },
-        { type: 'callback', text: 'О программе', payload: 'marathon' }
-      ],
-      [
-        { type: 'link', text: 'Отзывы на сайте', url: REVIEWS_URL },
-        { type: 'link', text: 'Контакты', url: CONTACTS_URL }
-      ],
-      [{ type: 'callback', text: 'Назад в главное меню', payload: 'start' }]
-    ])
+    text: 'Стоимость программы — 6 000 ₽\n\nВ стоимость входят сопровождение, ежедневная обратная связь, разбор рациона, групповой чат и учебные материалы.\n\nГлавный результат — не список блюд, а навык самостоятельно собирать питание, которое подходит тебе.',
+    attachments: [
+      ...heroAttachment(PRICE_IMAGE_URL),
+      ...buildKeyboard([
+        [{ type: 'link', text: 'Подать заявку', url: APPLICATION_URL }],
+        [
+          { type: 'callback', text: 'О программе', payload: 'marathon' },
+          { type: 'link', text: 'Отзывы', url: REVIEWS_URL }
+        ],
+        [{ type: 'callback', text: 'В меню', payload: 'start' }]
+      ])
+    ]
   };
 }
 
 function reviewsMessage() {
   return {
-    text: 'Отзывы участниц ✨\n\nНа сайте собраны истории о формате, поддержке и изменениях в питании. Открой страницу, чтобы посмотреть отзывы и понять, подходит ли тебе программа.',
-    attachments: buildKeyboard([
-      [
-        { type: 'link', text: 'Посмотреть отзывы', url: REVIEWS_URL },
-        { type: 'callback', text: 'О программе', payload: 'marathon' }
-      ],
-      [{ type: 'callback', text: 'Подать заявку', payload: 'apply' }],
-      [{ type: 'callback', text: 'Назад в главное меню', payload: 'start' }]
-    ])
+    text: 'Отзывы участниц ✨\n\nРеальные истории о поддержке, новых знаниях и результатах программы. Открой страницу отзывов, чтобы посмотреть подборку.',
+    attachments: [
+      ...['review-01.jpg', 'review-02.jpg', 'review-03.jpg', 'review-04.jpg', 'review-05.jpg', 'review-06.jpg'].flatMap(fileName => heroAttachment(`${VPS_MEDIA_ORIGIN}/media/${fileName}`)),
+      ...buildKeyboard([
+        [{ type: 'link', text: 'Посмотреть отзывы', url: REVIEWS_URL }],
+        [
+          { type: 'callback', text: 'О программе', payload: 'marathon' },
+          { type: 'link', text: 'Подать заявку', url: APPLICATION_URL }
+        ],
+        [{ type: 'callback', text: 'В меню', payload: 'start' }]
+      ])
+    ]
   };
 }
 
