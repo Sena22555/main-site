@@ -27,8 +27,7 @@ const MEDIA_FILES = new Map([
   ['review-02.jpg', 'image/jpeg'],
   ['review-03.jpg', 'image/jpeg'],
   ['review-04.jpg', 'image/jpeg'],
-  ['review-05.jpg', 'image/jpeg'],
-  ['review-06.jpg', 'image/jpeg']
+  ['review-05.jpg', 'image/jpeg']
 ]);
 const BUNDLED_MAX_CA_FILE = path.join(__dirname, 'certs', 'russian-trusted-root-ca.pem');
 const MAX_CA = MAX_CA_CERT_PEM
@@ -361,7 +360,7 @@ function reviewsMessage() {
   return {
     text: 'Отзывы участниц ✨\n\nРеальные истории о поддержке, новых знаниях и результатах программы. Открой страницу отзывов, чтобы посмотреть подборку.',
     attachments: [
-      ...['review-01.jpg', 'review-02.jpg', 'review-03.jpg', 'review-04.jpg', 'review-05.jpg', 'review-06.jpg'].flatMap(fileName => heroAttachment(`${VPS_MEDIA_ORIGIN}/media/${fileName}`)),
+      ...['review-01.jpg', 'review-02.jpg', 'review-03.jpg', 'review-04.jpg', 'review-05.jpg'].flatMap(fileName => heroAttachment(`${VPS_MEDIA_ORIGIN}/media/${fileName}`)),
       ...buildKeyboard([
         [{ type: 'link', text: 'Посмотреть отзывы', url: REVIEWS_URL }],
         [
