@@ -779,7 +779,7 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'OPTIONS' && req.url === '/applications/max') {
     if (origin !== ALLOWED_FRONTEND_ORIGIN) return sendJson(res, 403, { ok: false, error: 'Forbidden' });
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Application-Relay-Secret, X-Idempotency-Key');
     res.writeHead(204); return res.end();
   }
   if (req.method === 'GET' && req.url === '/health') {
@@ -821,7 +821,7 @@ const server = http.createServer(async (req, res) => {
       const required = ['name', 'phone', 'email', 'goal', 'consent'];
       if (required.some(field => !String(body[field] || '').trim())) return sendJson(res, 400, { ok: false, error: 'Missing required field' });
       if (body.consent !== true || body.chronicConditions !== 'Нет') return sendJson(res, 400, { ok: false, error: 'Invalid application' });
-      const limits = { name: 120, phone: 40, email: 160, goal: 500, motivation: 3000, maxId: 100, weight: 40, experience: 80, contactMethod: 20 };
+      const limits = { name: 120, phone: 40, email: 160, goal: 500, motivation: 3000, maxUsername: 100, maxId: 100, weight: 40, experience: 80, contactMethod: 20 };
       for (const [field, limit] of Object.entries(limits)) if (body[field] != null && String(body[field]).length > limit) return sendJson(res, 400, { ok: false, error: 'Invalid application' });
       const email = String(body.email).trim();
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return sendJson(res, 400, { ok: false, error: 'Invalid application' });
@@ -831,7 +831,7 @@ const server = http.createServer(async (req, res) => {
       if (body.experience && !['Новичок', 'Есть опыт', 'Пробовала много'].includes(String(body.experience))) return sendJson(res, 400, { ok: false, error: 'Invalid application' });
       APPLICATION_INFLIGHT.add(idempotencyKey);
       APPLICATION_IDEMPOTENCY.set(idempotencyKey, 'in-flight');
-      const application = { createdAt: new Date().toISOString(), program: 'Умный путь к стройности', price: '6000', source: 'smartslimway-max', name: String(body.name).trim(), phone: String(body.phone).trim(), contactMethod: String(body.contactMethod || 'max'), maxId: String(body.maxId || '').trim().replace(/^@/, ''), email, age, weight: String(body.weight || '').trim(), goal: String(body.goal).trim(), experience: String(body.experience || '').trim(), chronicConditions: 'Нет', motivation: String(body.motivation || '').trim() };
+      const application = { createdAt: new Date().toISOString(), program: 'Умный путь к стройности', price: '6000', source: 'smartslimway-max', name: String(body.name).trim(), phone: String(body.phone).trim(), contactMethod: String(body.contactMethod || 'max'), maxUsername: String(body.maxUsername ?? body.maxId ?? '').trim().replace(/^@/, ''), email, age, weight: String(body.weight || '').trim(), goal: String(body.goal).trim(), experience: String(body.experience || '').trim(), chronicConditions: 'Нет', motivation: String(body.motivation || '').trim() };
       try {
         await sendApplicationToOwner(application);
         APPLICATION_IDEMPOTENCY.set(idempotencyKey, Date.now());
