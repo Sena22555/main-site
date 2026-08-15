@@ -273,14 +273,14 @@ function startMessage() {
     attachments: [
       ...heroAttachment(MAIN_MENU_IMAGE_URL),
       ...buildKeyboard([
-        [{ type: 'callback', text: 'Всё бесплатно', payload: 'calculator' }],
+        [{ type: 'callback', text: 'Бесплатно рассчитать КБЖУ', payload: 'calculator' }],
         [
-          { type: 'link', text: 'Расчёт', url: CALCULATOR_URL },
-          { type: 'callback', text: 'Программа', payload: 'marathon' }
+          { type: 'callback', text: 'О программе', payload: 'marathon' },
+          { type: 'callback', text: 'Отзывы', payload: 'reviews' }
         ],
         [
-          { type: 'link', text: 'Отзывы', url: REVIEWS_URL },
-          { type: 'link', text: 'Подать заявку', url: APPLICATION_URL }
+          { type: 'callback', text: 'О Наталье', payload: 'about' },
+          { type: 'callback', text: 'Стоимость', payload: 'price' }
         ]
       ])
     ],
@@ -304,9 +304,8 @@ function aboutMessage() {
     attachments: [
       ...heroAttachment(ABOUT_IMAGE_URL),
       ...buildKeyboard([
-        [{ type: 'link', text: 'Подробнее о Наталье', url: ABOUT_URL }],
-        [{ type: 'callback', text: 'Подробнее о программе', payload: 'marathon' }],
-        [{ type: 'callback', text: 'Назад в главное меню', payload: 'start' }]
+        [{ type: 'callback', text: 'О программе', payload: 'marathon' }],
+        [{ type: 'callback', text: 'В меню', payload: 'start' }]
       ])
     ]
   };
@@ -318,16 +317,9 @@ function marathonMessage() {
     attachments: [
       ...heroAttachment(PROGRAM_IMAGE_URL),
       ...buildKeyboard([
-        [
-          { type: 'callback', text: 'Стоимость', payload: 'price' },
-          { type: 'link', text: 'Отзывы', url: REVIEWS_URL }
-        ],
         [{ type: 'link', text: 'Программа на сайте', url: MARATHON_URL }],
-        [
-          { type: 'link', text: 'Подать заявку', url: APPLICATION_URL },
-          { type: 'callback', text: 'Всё бесплатно', payload: 'calculator' }
-        ],
-        [{ type: 'link', text: 'Расчёт', url: CALCULATOR_URL }],
+        [{ type: 'link', text: 'Подать заявку', url: APPLICATION_URL }],
+        [{ type: 'callback', text: 'Стоимость', payload: 'price' }],
         [{ type: 'callback', text: 'В меню', payload: 'start' }]
       ])
     ]
@@ -358,15 +350,27 @@ function priceMessage() {
 
 function reviewsMessage() {
   return {
-    text: 'Отзывы участниц ✨\n\nРеальные истории о поддержке, новых знаниях и результатах программы. Открой страницу отзывов, чтобы посмотреть подборку.',
+    text: `Отзывы участниц ✨
+
+1. −10,9 кг
+«Наталья, спасибо большое за помощь, поддержку, за наши результаты!!! У меня появились силы, стремление, вдохновение, мотивация! Да просто захотелось жить, а не существовать!!!»
+
+2. Результаты участниц
+«Общий минус 8,5 кг» и «общий минус 4,1 кг». Даже без нарушений бывают колебания веса — это часть процесса.
+
+3. −5,1 кг без тренировок
+«Хочу сказать огромное спасибо за эту возможность быть частью всего этого. Мой результат −5,1 за весь месяц. И это без тренировок. Буду стараться и дальше, с полученными знаниями. Буду вас рекомендовать всем своим знакомым».
+
+4. Поддержка и лёгкость
+«Твой подход и марафон — уникален, всё чётко и в лёгкости. У меня даже гормоны пришли в норму. Штаны на 2 размера меньше».
+
+5. −4,4 кг
+«Огромное тебе спасибо за такой прекрасный марафон! Каждый раз новые знания и прекрасные рецепты! А результат просто супер!»`,
     attachments: [
       ...['review-01.jpg', 'review-02.jpg', 'review-03.jpg', 'review-04.jpg', 'review-05.jpg'].flatMap(fileName => heroAttachment(`${VPS_MEDIA_ORIGIN}/media/${fileName}`)),
       ...buildKeyboard([
-        [{ type: 'link', text: 'Посмотреть отзывы', url: REVIEWS_URL }],
-        [
-          { type: 'callback', text: 'О программе', payload: 'marathon' },
-          { type: 'link', text: 'Подать заявку', url: APPLICATION_URL }
-        ],
+        [{ type: 'link', text: 'Все отзывы на сайте', url: REVIEWS_URL }],
+        [{ type: 'callback', text: 'О программе', payload: 'marathon' }],
         [{ type: 'callback', text: 'В меню', payload: 'start' }]
       ])
     ]
@@ -377,7 +381,7 @@ function applyMessage() {
   return {
     text: 'Готова сделать первый шаг? 💫\n\nЗаполни короткую анкету на сайте. Наталья прочитает ответы лично, уточнит твою цель и честно скажет, подходит ли тебе программа.',
     attachments: buildKeyboard([
-      [{ type: 'link', text: 'Заполнить анкету', url: APPLICATION_URL }],
+      [{ type: 'link', text: 'Я перехожу', url: APPLICATION_URL }],
       [
         { type: 'callback', text: 'О программе', payload: 'marathon' },
         { type: 'callback', text: 'Стоимость', payload: 'price' }
