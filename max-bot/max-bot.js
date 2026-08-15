@@ -796,7 +796,7 @@ const server = http.createServer(async (req, res) => {
 
 ensureStorage();
 
-server.listen(PORT, () => {
+server.listen(PORT, '127.0.0.1', () => {
   console.log(`MAX bot webhook listening on http://localhost:${PORT}`);
   console.log(`Mini app URL: ${MINI_APP_URL}`);
   console.log(`Subscribers file: ${SUBSCRIBERS_FILE}`);
