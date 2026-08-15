@@ -16,11 +16,18 @@ const DAILY_SEND_ENABLED = process.env.DAILY_SEND_ENABLED === 'true';
 const DAILY_SECRET = process.env.DAILY_SECRET || '';
 const MAX_RECIPIENT_QUERY = process.env.MAX_RECIPIENT_QUERY || '';
 const APPLICATION_RELAY_SECRET = process.env.APPLICATION_RELAY_SECRET || '';
+// Optional Google Sheets bridge. No URL is embedded here: production must
+// provide the reviewed endpoint explicitly.
+const SHEETS_ENDPOINT = normalizeLink(process.env.MAX_SHEETS_ENDPOINT || '');
+const SHEETS_SECRET = process.env.MAX_SHEETS_SECRET || '';
 const MAX_OWNER_CONTACT_URL = normalizeLink(process.env.MAX_OWNER_CONTACT_URL || '');
 const ALLOWED_FRONTEND_ORIGIN = process.env.ALLOWED_FRONTEND_ORIGIN || 'https://new-site-kappa-eight.vercel.app';
 const APPLICATION_RATE_LIMIT = new Map();
 const APPLICATION_IDEMPOTENCY = new Map();
 const APPLICATION_INFLIGHT = new Set();
+const APPLICATIONS_BY_ID = new Map();
+const SHEETS_IDEMPOTENCY = new Map();
+const SHEETS_INFLIGHT = new Set();
 const STORAGE_DIR = path.join(__dirname, 'data');
 const SUBSCRIBERS_FILE = path.join(STORAGE_DIR, 'max-subscribers.json');
 const SUBSCRIBER_LOCK = `${SUBSCRIBERS_FILE}.lock`;
@@ -230,9 +237,34 @@ function sendJson(res, status, body) {
   res.end(text);
 }
 
-function applicationKeyboard(id) {
-  if (!MAX_OWNER_CONTACT_URL) return undefined;
-  return buildKeyboard([[{ type: 'link', text: 'Написать', url: MAX_OWNER_CONTACT_URL }]]);
+function isValidMaxDeepLink(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:'
+      && (url.hostname === 'max.ru' || url.hostname === 'www.max.ru')
+      && url.pathname.length > 1
+      && !url.search
+      && !url.hash;
+  } catch { return false; }
+}
+
+function callbackSignature(applicationId) {
+  return crypto.createHmac('sha256', ADMIN_SECRET).update(`sheet:add:${applicationId}`).digest('hex').slice(0, 32);
+}
+
+function sheetCallbackPayload(applicationId) {
+  return `sheet:add:${applicationId}:${callbackSignature(applicationId)}`;
+}
+
+function applicationKeyboard(application) {
+  const buttons = [];
+  if (application.contactMethod === 'max' && isValidMaxDeepLink(MAX_OWNER_CONTACT_URL)) {
+    buttons.push({ type: 'link', text: 'Написать', url: MAX_OWNER_CONTACT_URL });
+  }
+  if (SHEETS_ENDPOINT && SHEETS_SECRET) {
+    buttons.push({ type: 'callback', text: 'Добавить в таблицу', payload: sheetCallbackPayload(application.id) });
+  }
+  return buttons.length ? buildKeyboard([buttons]) : undefined;
 }
 
 function applicationMessage(application) {
@@ -241,7 +273,7 @@ function applicationMessage(application) {
     '',
     `Имя: ${application.name || '—'}`,
     `Телефон: ${application.phone || '—'}`,
-    `MAX username: ${application.maxId ? `@${application.maxId}` : '—'}`,
+    `MAX username: ${application.maxUsername ? `@${application.maxUsername}` : '—'}`,
     `Связаться: ${application.contactMethod === 'max' ? 'в MAX' : application.contactMethod === 'call' ? 'позвонить' : 'не связываться'}`,
     `Email: ${application.email || '—'}`,
     `Возраст: ${application.age || '—'}`,
@@ -250,7 +282,7 @@ function applicationMessage(application) {
     `Опыт: ${application.experience || '—'}`,
     `Мотивация: ${application.motivation || '—'}`
   ];
-  return { text: lines.join('\n'), attachments: applicationKeyboard(application.id) };
+  return { text: lines.join('\n'), attachments: applicationKeyboard(application) };
 }
 
 function buildKeyboard(buttons) {
@@ -677,6 +709,79 @@ async function sendApplicationToOwner(application) {
   return sendMessageByQuery(MAX_RECIPIENT_QUERY, applicationMessage(application));
 }
 
+function parseSheetCallback(payload) {
+  const match = /^sheet:add:([^:]{8,128}):([a-f0-9]{32})$/.exec(payload);
+  if (!match) return null;
+  const [applicationId, suppliedSignature] = match.slice(1);
+  const expectedSignature = callbackSignature(applicationId);
+  const supplied = Buffer.from(suppliedSignature, 'utf8');
+  const expected = Buffer.from(expectedSignature, 'utf8');
+  if (supplied.length !== expected.length || !crypto.timingSafeEqual(supplied, expected)) return null;
+  return applicationId;
+}
+
+function postJson(urlString, body, secret) {
+  const url = new URL(urlString);
+  const transport = url.protocol === 'https:' ? https : http;
+  const payload = JSON.stringify(body);
+  return new Promise((resolve, reject) => {
+    const request = transport.request(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(payload),
+        ...(secret ? { 'X-Sheets-Secret': secret } : {})
+      },
+      ...(url.protocol === 'https:' && MAX_CA ? { ca: MAX_CA } : {}),
+      ...(url.protocol === 'https:' && MAX_TLS_INSECURE ? { rejectUnauthorized: false } : {})
+    }, response => {
+      let data = '';
+      response.on('data', chunk => { data += chunk; });
+      response.on('end', () => {
+        if (response.statusCode >= 200 && response.statusCode < 300) return resolve(data ? JSON.parse(data) : {});
+        reject(new Error(`Sheets endpoint failed with status ${response.statusCode}`));
+      });
+    });
+    request.setTimeout(15_000, () => request.destroy(new Error('Sheets endpoint timed out')));
+    request.on('error', reject);
+    request.write(payload);
+    request.end();
+  });
+}
+
+async function addApplicationToSheet(applicationId) {
+  if (!SHEETS_ENDPOINT || !SHEETS_SECRET) throw new Error('Sheets integration is not configured');
+  const application = APPLICATIONS_BY_ID.get(applicationId);
+  if (!application) throw new Error('Application is no longer available');
+  if (SHEETS_IDEMPOTENCY.has(applicationId) || SHEETS_INFLIGHT.has(applicationId)) return { duplicate: true };
+  SHEETS_INFLIGHT.add(applicationId);
+  try {
+    const result = await postJson(SHEETS_ENDPOINT, { ...application, idempotencyKey: `max-sheet:${applicationId}` }, SHEETS_SECRET);
+    SHEETS_IDEMPOTENCY.set(applicationId, Date.now());
+    return result;
+  } finally {
+    SHEETS_INFLIGHT.delete(applicationId);
+  }
+}
+
+function isAuthorizedSheetActor(update) {
+  const target = detectChatTarget(update).query;
+  return Boolean(MAX_RECIPIENT_QUERY && target === MAX_RECIPIENT_QUERY);
+}
+
+async function handleSheetCallback(update, applicationId) {
+  if (!isAuthorizedSheetActor(update)) {
+    return answerCallback(update, { text: 'Недостаточно прав для этой операции.' });
+  }
+  try {
+    await addApplicationToSheet(applicationId);
+    return answerCallback(update, { text: 'Заявка добавлена в таблицу ✅' });
+  } catch (error) {
+    console.error('Sheets callback failed:', error.message);
+    return answerCallback(update, { text: 'Не удалось добавить заявку в таблицу. Попробуйте ещё раз.' });
+  }
+}
+
 async function sendMessageToUpdate(update, messageBody) {
   const target = detectChatTarget(update);
   return sendMessageByQuery(target.query, messageBody);
@@ -722,6 +827,8 @@ async function handleUpdate(update) {
 
   if (type === 'message_callback') {
     const payload = String(extractCallbackPayload(update) || '');
+    const applicationId = parseSheetCallback(payload);
+    if (applicationId) return handleSheetCallback(update, applicationId);
     return answerCallback(update, getResponseByPayload(payload, update));
   }
 
@@ -831,7 +938,9 @@ const server = http.createServer(async (req, res) => {
       if (body.experience && !['Новичок', 'Есть опыт', 'Пробовала много'].includes(String(body.experience))) return sendJson(res, 400, { ok: false, error: 'Invalid application' });
       APPLICATION_INFLIGHT.add(idempotencyKey);
       APPLICATION_IDEMPOTENCY.set(idempotencyKey, 'in-flight');
-      const application = { createdAt: new Date().toISOString(), program: 'Умный путь к стройности', price: '6000', source: 'smartslimway-max', name: String(body.name).trim(), phone: String(body.phone).trim(), contactMethod: String(body.contactMethod || 'max'), maxUsername: String(body.maxUsername ?? body.maxId ?? '').trim().replace(/^@/, ''), email, age, weight: String(body.weight || '').trim(), goal: String(body.goal).trim(), experience: String(body.experience || '').trim(), chronicConditions: 'Нет', motivation: String(body.motivation || '').trim() };
+      const application = { id: crypto.randomBytes(16).toString('hex'), createdAt: new Date().toISOString(), program: 'Умный путь к стройности', price: '6000', source: 'smartslimway-max', name: String(body.name).trim(), phone: String(body.phone).trim(), contactMethod: String(body.contactMethod || 'max'), maxUsername: String(body.maxUsername ?? body.maxId ?? '').trim().replace(/^@/, ''), email, age, weight: String(body.weight || '').trim(), goal: String(body.goal).trim(), experience: String(body.experience || '').trim(), chronicConditions: 'Нет', motivation: String(body.motivation || '').trim() };
+      APPLICATIONS_BY_ID.set(application.id, application);
+      if (APPLICATIONS_BY_ID.size > 10000) APPLICATIONS_BY_ID.delete(APPLICATIONS_BY_ID.keys().next().value);
       try {
         await sendApplicationToOwner(application);
         APPLICATION_IDEMPOTENCY.set(idempotencyKey, Date.now());
