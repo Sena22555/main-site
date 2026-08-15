@@ -542,7 +542,7 @@ function apiRequest(method, pathWithQuery, body) {
             resolve({ raw: data });
           }
         } else {
-          reject(new Error(`MAX API request failed with status ${res.statusCode}`));
+          reject(new Error(`MAX API request failed with status ${res.statusCode}: ${data.slice(0, 500)}`));
         }
       });
     });
@@ -588,7 +588,15 @@ async function answerCallback(update, messageBody) {
   }
 
   const payload = { message: buildOutgoingMessage(messageBody) };
-  return apiRequest('POST', `/answers?callback_id=${encodeURIComponent(callbackId)}`, payload);
+  try {
+    return await apiRequest('POST', `/answers?callback_id=${encodeURIComponent(callbackId)}`, payload);
+  } catch (error) {
+    // MAX can reject editing an old message (for example after an attachment
+    // type change). Keep the button usable by sending the requested screen as
+    // a fresh message instead.
+    console.warn(`Callback answer failed; sending a fresh message: ${error.message}`);
+    return sendMessageToUpdate(update, messageBody);
+  }
 }
 
 async function sendMessageToUpdate(update, messageBody) {
