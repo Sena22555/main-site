@@ -22,6 +22,13 @@ const MAX_CA = MAX_CA_CERT_PEM
   : fs.existsSync(BUNDLED_MAX_CA_FILE)
     ? fs.readFileSync(BUNDLED_MAX_CA_FILE, 'utf8')
     : '';
+const MAX_API_AGENT = new https.Agent({
+  keepAlive: true,
+  keepAliveMsecs: 1000,
+  maxSockets: 16,
+  maxFreeSockets: 4,
+  timeout: 30_000
+});
 
 function normalizeLink(url) {
   const value = String(url || '').trim();
@@ -41,7 +48,7 @@ const ABOUT_URL = normalizeLink(process.env.ABOUT_URL || `${SITE_ORIGIN}/about`)
 const MARATHON_URL = normalizeLink(process.env.MARATHON_URL || `${SITE_ORIGIN}/program`);
 const FAQ_URL = normalizeLink(process.env.FAQ_URL || `${SITE_ORIGIN}/faq`);
 const CONTACTS_URL = normalizeLink(process.env.CONTACTS_URL || `${SITE_ORIGIN}/contacts`);
-const HERO_IMAGE_URL = normalizeLink(process.env.HERO_IMAGE_URL || 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=1200&q=80');
+const HERO_IMAGE_URL = normalizeLink(process.env.HERO_IMAGE_URL || `${SITE_ORIGIN}/balanced-plate.jpg`);
 const DAILY_PROMPT_TEXT = process.env.DAILY_PROMPT_TEXT || 'Доброе утро ✨\n\nНу что, уже делаешь шаг к своей стройности? 🌿';
 const DAILY_WINDOW_LABEL = process.env.DAILY_WINDOW_LABEL || 'с 10:00 до 12:00';
 const WEBHOOK_URL = normalizeLink(process.env.WEBHOOK_URL || (process.env.RENDER_EXTERNAL_URL ? `${process.env.RENDER_EXTERNAL_URL}/webhook` : ''));
@@ -248,19 +255,16 @@ function startMessage() {
     attachments: [
       ...heroAttachment(),
       ...buildKeyboard([
-        [{ type: 'link', text: 'Бесплатный расчёт КБЖУ', url: CALCULATOR_URL }],
+        [{ type: 'link', text: '🧮 Бесплатный расчёт КБЖУ', url: CALCULATOR_URL }],
         [
-          { type: 'callback', text: 'О Наталье', payload: 'about' },
-          { type: 'callback', text: 'О программе', payload: 'marathon' }
-        ],
-        [
-          { type: 'callback', text: 'Отзывы', payload: 'reviews' },
+          { type: 'callback', text: 'О программе', payload: 'marathon' },
           { type: 'callback', text: 'Стоимость', payload: 'price' }
         ],
         [
-          { type: 'link', text: 'Открыть сайт', url: MINI_APP_URL },
-          { type: 'callback', text: 'Подать заявку', payload: 'apply' }
-        ]
+          { type: 'callback', text: 'Отзывы', payload: 'reviews' },
+          { type: 'callback', text: 'О Наталье', payload: 'about' }
+        ],
+        [{ type: 'callback', text: 'Подать заявку', payload: 'apply' }]
       ])
     ],
     format: 'markdown'
@@ -518,9 +522,11 @@ function apiRequest(method, pathWithQuery, body) {
   return new Promise((resolve, reject) => {
     const req = https.request(url, {
       method,
+      agent: MAX_API_AGENT,
       headers: {
         Authorization: MAX_BOT_TOKEN,
         'Content-Type': 'application/json',
+        Connection: 'keep-alive',
         ...(payload ? { 'Content-Length': Buffer.byteLength(payload) } : {})
       },
       ...(MAX_CA ? { ca: MAX_CA } : {}),
@@ -541,6 +547,9 @@ function apiRequest(method, pathWithQuery, body) {
       });
     });
 
+    req.setTimeout(15_000, () => {
+      req.destroy(new Error('MAX API request timed out'));
+    });
     req.on('error', reject);
     if (payload) req.write(payload);
     req.end();
