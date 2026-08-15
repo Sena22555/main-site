@@ -18,7 +18,10 @@ const STORAGE_DIR = path.join(__dirname, 'data');
 const SUBSCRIBERS_FILE = path.join(STORAGE_DIR, 'max-subscribers.json');
 const MEDIA_DIR = path.join(__dirname, 'media');
 const MEDIA_FILES = new Map([
-  ['hero-balanced.jpg', 'image/jpeg']
+  ['hero-balanced.jpg', 'image/jpeg'],
+  ['main-menu.jpg', 'image/jpeg'],
+  ['program.jpg', 'image/jpeg'],
+  ['about-natalia.jpg', 'image/jpeg']
 ]);
 const BUNDLED_MAX_CA_FILE = path.join(__dirname, 'certs', 'russian-trusted-root-ca.pem');
 const MAX_CA = MAX_CA_CERT_PEM
@@ -44,7 +47,7 @@ function normalizeLink(url) {
 // Default every user-facing route to the primary frontend while allowing the
 // future Render service to override URLs without editing the bot source.
 const MINI_APP_URL = normalizeLink(process.env.MINI_APP_URL || 'https://new-site-kappa-eight.vercel.app/smartslimway');
-const SITE_ORIGIN = MINI_APP_URL.replace(/\/$/, '');
+const SITE_ORIGIN = new URL(MINI_APP_URL).origin;
 const APPLICATION_URL = normalizeLink(process.env.APPLICATION_URL || `${SITE_ORIGIN}/application`);
 const CALCULATOR_URL = normalizeLink(process.env.CALCULATOR_URL || `${SITE_ORIGIN}/calculator`);
 const REVIEWS_URL = normalizeLink(process.env.REVIEWS_URL || `${SITE_ORIGIN}/reviews`);
@@ -53,6 +56,9 @@ const MARATHON_URL = normalizeLink(process.env.MARATHON_URL || `${SITE_ORIGIN}/p
 const FAQ_URL = normalizeLink(process.env.FAQ_URL || `${SITE_ORIGIN}/faq`);
 const CONTACTS_URL = normalizeLink(process.env.CONTACTS_URL || `${SITE_ORIGIN}/contacts`);
 const HERO_IMAGE_URL = normalizeLink(process.env.HERO_IMAGE_URL || 'https://45-138-157-79.sslip.io/media/hero-balanced.jpg');
+const MAIN_MENU_IMAGE_URL = normalizeLink(process.env.MAIN_MENU_IMAGE_URL || 'https://45-138-157-79.sslip.io/media/main-menu.jpg');
+const PROGRAM_IMAGE_URL = normalizeLink(process.env.PROGRAM_IMAGE_URL || 'https://45-138-157-79.sslip.io/media/program.jpg');
+const ABOUT_IMAGE_URL = normalizeLink(process.env.ABOUT_IMAGE_URL || 'https://45-138-157-79.sslip.io/media/about-natalia.jpg');
 const DAILY_PROMPT_TEXT = process.env.DAILY_PROMPT_TEXT || 'Доброе утро ✨\n\nНу что, уже делаешь шаг к своей стройности? 🌿';
 const DAILY_WINDOW_LABEL = process.env.DAILY_WINDOW_LABEL || 'с 10:00 до 12:00';
 const WEBHOOK_URL = normalizeLink(process.env.WEBHOOK_URL || (process.env.RENDER_EXTERNAL_URL ? `${process.env.RENDER_EXTERNAL_URL}/webhook` : ''));
@@ -257,7 +263,7 @@ function startMessage() {
   return {
     text: 'Привет, я Наталья 💫\n\n«Умный путь к стройности» — это сопровождение, контроль, обратная связь и понятные привычки для обычной жизни. Не марафон на силу воли, а система, которую легче поддерживать.\n\nВыбери, с чего начать 👇',
     attachments: [
-      ...heroAttachment(),
+      ...heroAttachment(MAIN_MENU_IMAGE_URL),
       ...buildKeyboard([
         [{ type: 'link', text: '🧮 Бесплатный расчёт КБЖУ', url: CALCULATOR_URL }],
         [
@@ -268,7 +274,7 @@ function startMessage() {
           { type: 'callback', text: 'Отзывы', payload: 'reviews' },
           { type: 'callback', text: 'О Наталье', payload: 'about' }
         ],
-        [{ type: 'callback', text: 'Подать заявку', payload: 'apply' }]
+        [{ type: 'link', text: 'Подать заявку', url: APPLICATION_URL }]
       ])
     ],
     format: 'markdown'
@@ -288,29 +294,33 @@ function calculatorMessage() {
 function aboutMessage() {
   return {
     text: 'Меня зовут Наталья, мне 48 лет. Я дипломированный нутрициолог и наставник 💫\n\nПомогаю выстроить питание без жёстких диет, тревоги и чувства вины. Вместо чужого меню мы разбираемся в продуктах, порциях и сигналах тела — чтобы ты могла уверенно собирать рацион под свою жизнь.',
-    attachments: buildKeyboard([
-      [{ type: 'link', text: 'Подробнее о Наталье', url: ABOUT_URL }],
-      [{ type: 'callback', text: 'О программе', payload: 'marathon' }],
-      [{ type: 'callback', text: 'Назад в главное меню', payload: 'start' }]
-    ])
+    attachments: [
+      ...heroAttachment(ABOUT_IMAGE_URL),
+      ...buildKeyboard([
+        [{ type: 'link', text: 'Подробнее о Наталье', url: ABOUT_URL }],
+        [{ type: 'callback', text: 'Подробнее о программе', payload: 'marathon' }],
+        [{ type: 'callback', text: 'Назад в главное меню', payload: 'start' }]
+      ])
+    ]
   };
 }
 
 function marathonMessage() {
   return {
     text: '«Умный путь к стройности» 💫\n\nСопровождение, контроль, обратная связь и понятные привычки для обычной жизни. Это не марафон на силу воли, а система, которую легче поддерживать.\n\nЧто разбираем:\n• сигналы голода и сытости\n• роль инсулина, лептина и грелина\n• простые и сложные углеводы\n• полезные жиры и белки\n• сбалансированную тарелку и замены продуктов\n• зелень, овощи и питьевой режим\n\nТы учишься выбирать продукты без тревоги и самостоятельно собирать рацион под свой вкус, цель и распорядок дня.',
-    attachments: buildKeyboard([
-      [
-        { type: 'callback', text: 'Стоимость', payload: 'price' },
-        { type: 'link', text: 'Программа на сайте', url: MARATHON_URL }
-      ],
-      [
-        { type: 'callback', text: 'Отзывы', payload: 'reviews' },
-        { type: 'callback', text: 'Подать заявку', payload: 'apply' }
-      ],
-      [{ type: 'link', text: 'Бесплатный расчёт КБЖУ', url: CALCULATOR_URL }],
-      [{ type: 'callback', text: 'Назад в главное меню', payload: 'start' }]
-    ])
+    attachments: [
+      ...heroAttachment(PROGRAM_IMAGE_URL),
+      ...buildKeyboard([
+        [
+          { type: 'callback', text: 'Стоимость', payload: 'price' },
+          { type: 'callback', text: 'Отзывы', payload: 'reviews' }
+        ],
+        [{ type: 'link', text: 'Программа на сайте', url: MARATHON_URL }],
+        [{ type: 'link', text: 'Бесплатный расчёт КБЖУ', url: CALCULATOR_URL }],
+        [{ type: 'callback', text: 'Подать заявку', payload: 'apply' }],
+        [{ type: 'callback', text: 'Назад в главное меню', payload: 'start' }]
+      ])
+    ]
   };
 }
 
