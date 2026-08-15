@@ -16,6 +16,10 @@ const DAILY_SEND_ENABLED = process.env.DAILY_SEND_ENABLED === 'true';
 const DAILY_SECRET = process.env.DAILY_SECRET || '';
 const STORAGE_DIR = path.join(__dirname, 'data');
 const SUBSCRIBERS_FILE = path.join(STORAGE_DIR, 'max-subscribers.json');
+const MEDIA_DIR = path.join(__dirname, 'media');
+const MEDIA_FILES = new Map([
+  ['hero-balanced.jpg', 'image/jpeg']
+]);
 const BUNDLED_MAX_CA_FILE = path.join(__dirname, 'certs', 'russian-trusted-root-ca.pem');
 const MAX_CA = MAX_CA_CERT_PEM
   ? MAX_CA_CERT_PEM.replace(/\\n/g, '\n')
@@ -48,7 +52,7 @@ const ABOUT_URL = normalizeLink(process.env.ABOUT_URL || `${SITE_ORIGIN}/about`)
 const MARATHON_URL = normalizeLink(process.env.MARATHON_URL || `${SITE_ORIGIN}/program`);
 const FAQ_URL = normalizeLink(process.env.FAQ_URL || `${SITE_ORIGIN}/faq`);
 const CONTACTS_URL = normalizeLink(process.env.CONTACTS_URL || `${SITE_ORIGIN}/contacts`);
-const HERO_IMAGE_URL = normalizeLink(`${SITE_ORIGIN}/balanced-plate.jpg`);
+const HERO_IMAGE_URL = normalizeLink(process.env.HERO_IMAGE_URL || 'https://45-138-157-79.sslip.io/media/hero-balanced.jpg');
 const DAILY_PROMPT_TEXT = process.env.DAILY_PROMPT_TEXT || 'Доброе утро ✨\n\nНу что, уже делаешь шаг к своей стройности? 🌿';
 const DAILY_WINDOW_LABEL = process.env.DAILY_WINDOW_LABEL || 'с 10:00 до 12:00';
 const WEBHOOK_URL = normalizeLink(process.env.WEBHOOK_URL || (process.env.RENDER_EXTERNAL_URL ? `${process.env.RENDER_EXTERNAL_URL}/webhook` : ''));
@@ -698,6 +702,23 @@ async function handleUpdate(update) {
 const server = http.createServer(async (req, res) => {
   if (req.method === 'GET' && req.url === '/health') {
     return sendJson(res, 200, { ok: true, subscribers: activeSubscribers().length });
+  }
+
+  if (req.method === 'GET' && req.url.startsWith('/media/')) {
+    const fileName = decodeURIComponent(req.url.slice('/media/'.length).split('?')[0]);
+    const contentType = MEDIA_FILES.get(fileName);
+    if (!contentType || fileName.includes('/') || fileName.includes('\\')) {
+      return sendJson(res, 404, { ok: false, error: 'Not found' });
+    }
+    const filePath = path.join(MEDIA_DIR, fileName);
+    if (!fs.existsSync(filePath)) return sendJson(res, 404, { ok: false, error: 'Not found' });
+    const body = fs.readFileSync(filePath);
+    res.writeHead(200, {
+      'Content-Type': contentType,
+      'Content-Length': body.length,
+      'Cache-Control': 'public, max-age=86400'
+    });
+    return res.end(body);
   }
 
   if (req.method === 'POST' && req.url === '/webhook') {
