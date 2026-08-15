@@ -14,8 +14,16 @@ const MAX_CA_CERT_PEM = process.env.MAX_CA_CERT_PEM || '';
 const MAX_TLS_INSECURE = process.env.MAX_TLS_INSECURE === 'true';
 const DAILY_SEND_ENABLED = process.env.DAILY_SEND_ENABLED === 'true';
 const DAILY_SECRET = process.env.DAILY_SECRET || '';
+const MAX_RECIPIENT_QUERY = process.env.MAX_RECIPIENT_QUERY || '';
+const APPLICATION_RELAY_SECRET = process.env.APPLICATION_RELAY_SECRET || '';
+const MAX_OWNER_CONTACT_URL = normalizeLink(process.env.MAX_OWNER_CONTACT_URL || '');
+const ALLOWED_FRONTEND_ORIGIN = process.env.ALLOWED_FRONTEND_ORIGIN || 'https://new-site-kappa-eight.vercel.app';
+const APPLICATION_RATE_LIMIT = new Map();
+const APPLICATION_IDEMPOTENCY = new Map();
+const APPLICATION_INFLIGHT = new Set();
 const STORAGE_DIR = path.join(__dirname, 'data');
 const SUBSCRIBERS_FILE = path.join(STORAGE_DIR, 'max-subscribers.json');
+const SUBSCRIBER_LOCK = `${SUBSCRIBERS_FILE}.lock`;
 const MEDIA_DIR = path.join(__dirname, 'media');
 const MEDIA_FILES = new Map([
   ['hero-balanced.jpg', 'image/jpeg'],
@@ -90,19 +98,13 @@ function ensureStorage() {
   if (!fs.existsSync(STORAGE_DIR)) {
     fs.mkdirSync(STORAGE_DIR, { recursive: true });
   }
-  if (!fs.existsSync(SUBSCRIBERS_FILE)) {
-    fs.writeFileSync(SUBSCRIBERS_FILE, '[]\n', { encoding: 'utf8', mode: 0o600 });
-  }
+  if (!fs.existsSync(SUBSCRIBERS_FILE)) fs.writeFileSync(SUBSCRIBERS_FILE, '[]\n', { encoding: 'utf8', mode: 0o600 });
   fs.chmodSync(SUBSCRIBERS_FILE, 0o600);
 }
 
 function readSubscribers() {
   ensureStorage();
-  try {
-    return JSON.parse(fs.readFileSync(SUBSCRIBERS_FILE, 'utf8'));
-  } catch {
-    return [];
-  }
+  try { return JSON.parse(fs.readFileSync(SUBSCRIBERS_FILE, 'utf8')); } catch { return []; }
 }
 
 function writeSubscribers(items) {
@@ -128,7 +130,21 @@ function hasValidSecret(req, headerName, expected) {
     && crypto.timingSafeEqual(suppliedBuffer, expectedBuffer);
 }
 
+function withStorageLock(operation) {
+  ensureStorage();
+  let fd;
+  for (let attempt = 0; attempt < 100; attempt += 1) {
+    try { fd = fs.openSync(SUBSCRIBER_LOCK, 'wx', 0o600); break; } catch (error) {
+      if (error.code !== 'EEXIST') throw error;
+      if (attempt === 99) throw new Error('Subscriber storage is busy');
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);
+    }
+  }
+  try { return operation(); } finally { try { fs.closeSync(fd); } catch {} try { fs.unlinkSync(SUBSCRIBER_LOCK); } catch {} }
+}
+
 function upsertSubscriber(update) {
+  return withStorageLock(() => {
   ensureStorage();
 
   const chatId = update?.chat_id ?? update?.message?.recipient?.chat_id ?? null;
@@ -157,9 +173,11 @@ function upsertSubscriber(update) {
 
   writeSubscribers(items);
   return next;
+  });
 }
 
 function setSubscriberActive(update, active) {
+  return withStorageLock(() => {
   ensureStorage();
   const chatId = update?.chat_id ?? update?.message?.recipient?.chat_id ?? null;
   const userId = update?.user?.user_id ?? update?.user_id ?? update?.message?.recipient?.user_id ?? null;
@@ -174,6 +192,7 @@ function setSubscriberActive(update, active) {
   existing.lastSeenAt = new Date().toISOString();
   writeSubscribers(items);
   return existing;
+  });
 }
 
 function activeSubscribers() {
@@ -209,6 +228,29 @@ function sendJson(res, status, body) {
     'Content-Length': Buffer.byteLength(text)
   });
   res.end(text);
+}
+
+function applicationKeyboard(id) {
+  if (!MAX_OWNER_CONTACT_URL) return undefined;
+  return buildKeyboard([[{ type: 'link', text: 'Написать', url: MAX_OWNER_CONTACT_URL }]]);
+}
+
+function applicationMessage(application) {
+  const lines = [
+    'Новая заявка с сайта SmartSlimWay',
+    '',
+    `Имя: ${application.name || '—'}`,
+    `Телефон: ${application.phone || '—'}`,
+    `MAX username: ${application.maxId ? `@${application.maxId}` : '—'}`,
+    `Связаться: ${application.contactMethod === 'max' ? 'в MAX' : application.contactMethod === 'call' ? 'позвонить' : 'не связываться'}`,
+    `Email: ${application.email || '—'}`,
+    `Возраст: ${application.age || '—'}`,
+    `Вес: ${application.weight || '—'}`,
+    `Цель: ${application.goal || '—'}`,
+    `Опыт: ${application.experience || '—'}`,
+    `Мотивация: ${application.motivation || '—'}`
+  ];
+  return { text: lines.join('\n'), attachments: applicationKeyboard(application.id) };
 }
 
 function buildKeyboard(buttons) {
@@ -630,6 +672,11 @@ async function answerCallback(update, messageBody) {
   }
 }
 
+async function sendApplicationToOwner(application) {
+  if (!MAX_RECIPIENT_QUERY) throw new Error('MAX_RECIPIENT_QUERY is not configured');
+  return sendMessageByQuery(MAX_RECIPIENT_QUERY, applicationMessage(application));
+}
+
 async function sendMessageToUpdate(update, messageBody) {
   const target = detectChatTarget(update);
   return sendMessageByQuery(target.query, messageBody);
@@ -674,7 +721,7 @@ async function handleUpdate(update) {
   }
 
   if (type === 'message_callback') {
-    const payload = extractCallbackPayload(update);
+    const payload = String(extractCallbackPayload(update) || '');
     return answerCallback(update, getResponseByPayload(payload, update));
   }
 
@@ -727,6 +774,14 @@ async function handleUpdate(update) {
 }
 
 const server = http.createServer(async (req, res) => {
+  const origin = req.headers.origin;
+  if (origin === ALLOWED_FRONTEND_ORIGIN) { res.setHeader('Access-Control-Allow-Origin', origin); res.setHeader('Vary', 'Origin'); }
+  if (req.method === 'OPTIONS' && req.url === '/applications/max') {
+    if (origin !== ALLOWED_FRONTEND_ORIGIN) return sendJson(res, 403, { ok: false, error: 'Forbidden' });
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.writeHead(204); return res.end();
+  }
   if (req.method === 'GET' && req.url === '/health') {
     return sendJson(res, 200, { ok: true, subscribers: activeSubscribers().length });
   }
@@ -746,6 +801,53 @@ const server = http.createServer(async (req, res) => {
       'Cache-Control': 'public, max-age=86400'
     });
     return res.end(body);
+  }
+
+  if (req.method === 'POST' && req.url === '/applications/max') {
+    let idempotencyKey = '';
+    try {
+      if (origin !== ALLOWED_FRONTEND_ORIGIN) return sendJson(res, 403, { ok: false, error: 'Forbidden' });
+      if (!APPLICATION_RELAY_SECRET || !hasValidSecret(req, 'x-application-relay-secret', APPLICATION_RELAY_SECRET)) return sendJson(res, 401, { ok: false, error: 'Unauthorized' });
+      if (req.headers['content-type']?.split(';')[0].trim() !== 'application/json') return sendJson(res, 415, { ok: false, error: 'Unsupported media type' });
+      idempotencyKey = String(req.headers['x-idempotency-key'] || '').trim();
+      if (!/^[A-Za-z0-9._:-]{8,160}$/.test(idempotencyKey)) return sendJson(res, 400, { ok: false, error: 'Missing idempotency key' });
+      if (APPLICATION_IDEMPOTENCY.has(idempotencyKey) || APPLICATION_INFLIGHT.has(idempotencyKey)) return sendJson(res, 202, { ok: true, duplicate: true });
+      const clientKey = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown';
+      const now = Date.now();
+      const recent = APPLICATION_RATE_LIMIT.get(clientKey) || 0;
+      if (now - recent < 60_000) return sendJson(res, 429, { ok: false, error: 'Too many requests' });
+      APPLICATION_RATE_LIMIT.set(clientKey, now);
+      const body = await parseJsonBody(req);
+      const required = ['name', 'phone', 'email', 'goal', 'consent'];
+      if (required.some(field => !String(body[field] || '').trim())) return sendJson(res, 400, { ok: false, error: 'Missing required field' });
+      if (body.consent !== true || body.chronicConditions !== 'Нет') return sendJson(res, 400, { ok: false, error: 'Invalid application' });
+      const limits = { name: 120, phone: 40, email: 160, goal: 500, motivation: 3000, maxId: 100, weight: 40, experience: 80, contactMethod: 20 };
+      for (const [field, limit] of Object.entries(limits)) if (body[field] != null && String(body[field]).length > limit) return sendJson(res, 400, { ok: false, error: 'Invalid application' });
+      const email = String(body.email).trim();
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return sendJson(res, 400, { ok: false, error: 'Invalid application' });
+      const age = body.age === '' || body.age == null ? '' : Number(body.age);
+      if (age !== '' && (!Number.isInteger(age) || age < 18 || age > 99)) return sendJson(res, 400, { ok: false, error: 'Invalid application' });
+      if (!['max', 'call', 'none'].includes(String(body.contactMethod || 'max'))) return sendJson(res, 400, { ok: false, error: 'Invalid application' });
+      if (body.experience && !['Новичок', 'Есть опыт', 'Пробовала много'].includes(String(body.experience))) return sendJson(res, 400, { ok: false, error: 'Invalid application' });
+      APPLICATION_INFLIGHT.add(idempotencyKey);
+      APPLICATION_IDEMPOTENCY.set(idempotencyKey, 'in-flight');
+      const application = { createdAt: new Date().toISOString(), program: 'Умный путь к стройности', price: '6000', source: 'smartslimway-max', name: String(body.name).trim(), phone: String(body.phone).trim(), contactMethod: String(body.contactMethod || 'max'), maxId: String(body.maxId || '').trim().replace(/^@/, ''), email, age, weight: String(body.weight || '').trim(), goal: String(body.goal).trim(), experience: String(body.experience || '').trim(), chronicConditions: 'Нет', motivation: String(body.motivation || '').trim() };
+      try {
+        await sendApplicationToOwner(application);
+        APPLICATION_IDEMPOTENCY.set(idempotencyKey, Date.now());
+      } finally {
+        APPLICATION_INFLIGHT.delete(idempotencyKey);
+      }
+      if (APPLICATION_IDEMPOTENCY.size > 10000) {
+        const oldest = APPLICATION_IDEMPOTENCY.keys().next().value;
+        APPLICATION_IDEMPOTENCY.delete(oldest);
+      }
+      return sendJson(res, 202, { ok: true });
+    } catch (error) {
+      if (idempotencyKey) APPLICATION_IDEMPOTENCY.delete(idempotencyKey);
+      console.error('Application relay failed:', error.message);
+      return sendJson(res, 502, { ok: false, error: 'Application delivery failed' });
+    }
   }
 
   if (req.method === 'POST' && req.url === '/webhook') {
@@ -813,7 +915,7 @@ const server = http.createServer(async (req, res) => {
 
 ensureStorage();
 
-server.listen(PORT, '127.0.0.1', () => {
+server.listen(PORT, process.env.HOST || '127.0.0.1', () => {
   console.log(`MAX bot webhook listening on http://localhost:${PORT}`);
   console.log(`Mini app URL: ${MINI_APP_URL}`);
   console.log(`Subscribers file: ${SUBSCRIBERS_FILE}`);

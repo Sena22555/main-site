@@ -1,3 +1,6 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    { "source": "/api/applications/max", "destination": "/api/applications/max.js" },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }

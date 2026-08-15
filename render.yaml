@@ -12,6 +12,16 @@ services:
         sync: false
       - key: MAX_WEBHOOK_SECRET
         generateValue: true
+      - key: ADMIN_SECRET
+        generateValue: true
+      - key: APPLICATION_RELAY_SECRET
+        generateValue: true
+      - key: MAX_RECIPIENT_QUERY
+        sync: false
+      - key: ALLOWED_FRONTEND_ORIGIN
+        value: https://new-site-kappa-eight.vercel.app
+      - key: HOST
+        value: 0.0.0.0
       - key: MINI_APP_URL
         value: https://new-site-kappa-eight.vercel.app/smartslimway
       - key: APPLICATION_URL

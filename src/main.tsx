@@ -21,7 +21,7 @@ const stages = [
   ['Собирать тарелку', 'Осваиваем понятную формулу тарелки и варианты замен: сегодня картофель, завтра гречка или макароны — без чувства, что план нарушен.', 'Белок · Гарнир · Овощи · Заправка'],
   ['Выбирать самостоятельно', 'Закрепляем навык на обычной еде, в магазине, кафе и дома, чтобы после программы не зависеть от готовой таблицы меню.', 'Практика · Обратная связь · Своя система'],
 ];
-const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzRC5ecCQjBHqfLDxxAUAxqiXRTfRDAz71qEyGXNa5aUwCYxs7prjCTc1CBCWtOEIRf/exec';
+const APPLICATION_RELAY_URL = '/api/applications/max';
 
 function Reveal({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
   const animation = useInViewAnimation();
@@ -64,6 +64,7 @@ function ApplicationForm() {
   const [status, setStatus] = useState('');
   const [sending, setSending] = useState(false);
   const [hasConditions, setHasConditions] = useState<'yes' | 'no' | ''>('');
+  const [contactMethod, setContactMethod] = useState<'max' | 'call' | 'none'>('max');
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (hasConditions !== 'no') {
@@ -74,27 +75,27 @@ function ApplicationForm() {
     setStatus('Отправляю анкету...');
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
-    const telegram = String(form.get('telegram') || '').trim().replace(/^@/, '');
-    const data = { createdAt: new Date().toISOString(), program: 'Умный путь к стройности', price: '6000', source: 'smartslimway-site', name: form.get('name') || '', phone: form.get('phone') || '', telegram, email: form.get('email') || '', age: form.get('age') || '', weight: form.get('weight') || '', goal: form.get('goal') || '', experience: form.get('experience') || '', chronicConditions: 'Нет', motivation: form.get('motivation') || '' };
+    const maxUsername = String(form.get('maxUsername') || '').trim().replace(/^@/, '');
+    const data = { createdAt: new Date().toISOString(), program: 'Умный путь к стройности', price: '6000', source: 'smartslimway-max', name: form.get('name') || '', phone: form.get('phone') || '', contactMethod, maxUsername, email: form.get('email') || '', age: form.get('age') || '', weight: form.get('weight') || '', goal: form.get('goal') || '', experience: form.get('experience') || '', chronicConditions: 'Нет', motivation: form.get('motivation') || '', consent: true };
+      const idempotencyKey = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
     try {
-      const saved = JSON.parse(localStorage.getItem('smart-path-applications') || '[]');
-      localStorage.setItem('smart-path-applications', JSON.stringify([...saved, data]));
       const controller = new AbortController();
       const timeout = window.setTimeout(() => controller.abort(), 8000);
-      const response = await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(data), signal: controller.signal });
+      const response = await fetch(APPLICATION_RELAY_URL, { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Idempotency-Key': idempotencyKey }, body: JSON.stringify(data), signal: controller.signal });
       window.clearTimeout(timeout);
-      if (!response.ok) throw new Error('sheet');
+      if (!response.ok) throw new Error('relay');
       setStatus('Анкета отправлена. Наталья свяжется с тобой лично.');
       formElement.reset();
       setHasConditions('');
+      setContactMethod('max');
     } catch {
-      setStatus('Анкета сохранена локально. Проверь подключение к таблице и повтори отправку.');
+      setStatus('Не удалось отправить анкету. Проверь подключение и повтори попытку. Данные не сохраняются в браузере.');
     } finally {
       setSending(false);
     }
   };
   const blocked = hasConditions !== 'no';
-  return <form className="application-form" onSubmit={submit}><div className="form-grid"><label>Имя *<input name="name" required placeholder="Твоё имя" /></label><label>Телефон *<input name="phone" type="tel" required placeholder="+7 (999) 123-45-67" /></label><label>Telegram<input name="telegram" placeholder="@username" /></label><label>Email *<input name="email" type="email" required placeholder="твой@email.com" /></label><label>Возраст<input name="age" type="number" min="18" max="99" placeholder="25" /></label><label>Текущий вес<input name="weight" placeholder="65 кг" /></label></div><label>Цель *<input name="goal" required placeholder="Например: наладить режим питания" /></label><fieldset><legend>Опыт с диетами</legend><label><input type="radio" name="experience" value="Новичок" /> Новичок</label><label><input type="radio" name="experience" value="Есть опыт" /> Есть опыт</label><label><input type="radio" name="experience" value="Пробовала много" /> Пробовала много</label></fieldset><fieldset className="medical-question"><legend>Есть ли у тебя хронические заболевания? *</legend><label><input required type="radio" name="chronicConditions" value="Нет" checked={hasConditions === 'no'} onChange={() => { setHasConditions('no'); setStatus(''); }} /> Нет</label><label><input required type="radio" name="chronicConditions" value="Да" checked={hasConditions === 'yes'} onChange={() => { setHasConditions('yes'); setStatus('При хронических заболеваниях мы не можем проводить программу. Пожалуйста, обсуди питание с лечащим врачом.'); }} /> Да</label>{hasConditions === 'yes' && <p className="medical-warning" role="alert">При наличии хронических заболеваний мы не можем проводить для тебя программу. Изменения питания необходимо согласовать с лечащим врачом.</p>}</fieldset><label>Почему хочешь участвовать?<textarea name="motivation" rows={4} placeholder="Расскажи о своей ситуации..." /></label><label className="consent"><input type="checkbox" required /> Согласна на обработку персональных данных</label><button className={`button primary ${blocked ? 'is-blocked' : ''}`} type="submit" disabled={sending || blocked}>{sending ? 'Отправляю...' : hasConditions === 'yes' ? 'Участие недоступно' : 'Отправить анкету'} <ArrowUpRight size={16} /></button><p className="form-status" role="status">{status}</p></form>;
+  return <form className="application-form" onSubmit={submit}><div className="form-grid"><label>Имя *<input name="name" required placeholder="Твоё имя" /></label><label>Телефон *<input name="phone" type="tel" required placeholder="+7 (999) 123-45-67" /></label><label>MAX username<input name="maxUsername" placeholder="@username в MAX" autoComplete="username" /></label><label>Email *<input name="email" type="email" required placeholder="твой@email.com" /></label><label>Возраст<input name="age" type="number" min="18" max="99" placeholder="25" /></label><label>Текущий вес<input name="weight" placeholder="65 кг" /></label></div><fieldset className="contact-method"><legend>Как с тобой связаться?</legend><label><input type="radio" name="contactMethod" value="max" checked={contactMethod === 'max'} onChange={() => setContactMethod('max')} /> MAX</label><label><input type="radio" name="contactMethod" value="call" checked={contactMethod === 'call'} onChange={() => setContactMethod('call')} /> Позвонить</label><label><input type="radio" name="contactMethod" value="none" checked={contactMethod === 'none'} onChange={() => setContactMethod('none')} /> Не связываться</label></fieldset><label>Цель *<input name="goal" required placeholder="Например: наладить режим питания" /></label><fieldset><legend>Опыт с диетами</legend><label><input type="radio" name="experience" value="Новичок" /> Новичок</label><label><input type="radio" name="experience" value="Есть опыт" /> Есть опыт</label><label><input type="radio" name="experience" value="Пробовала много" /> Пробовала много</label></fieldset><fieldset className="medical-question"><legend>Есть ли у тебя хронические заболевания? *</legend><label><input required type="radio" name="chronicConditions" value="Нет" checked={hasConditions === 'no'} onChange={() => { setHasConditions('no'); setStatus(''); }} /> Нет</label><label><input required type="radio" name="chronicConditions" value="Да" checked={hasConditions === 'yes'} onChange={() => { setHasConditions('yes'); setStatus('При хронических заболеваниях мы не можем проводить программу. Пожалуйста, обсуди питание с лечащим врачом.'); }} /> Да</label>{hasConditions === 'yes' && <p className="medical-warning" role="alert">При наличии хронических заболеваний мы не можем проводить для тебя программу. Изменения питания необходимо согласовать с лечащим врачом.</p>}</fieldset><label>Почему хочешь участвовать?<textarea name="motivation" rows={4} placeholder="Расскажи о своей ситуации..." /></label><label className="consent"><input name="consent" type="checkbox" required /> Согласна на обработку персональных данных и передачу заявки в MAX</label><button className={`button primary ${blocked ? 'is-blocked' : ''}`} type="submit" disabled={sending || blocked}>{sending ? 'Отправляю...' : hasConditions === 'yes' ? 'Участие недоступно' : 'Отправить анкету'} <ArrowUpRight size={16} /></button><p className="form-status" role="status">{status}</p></form>;
 }
 
 type NutritionGoal = 'loss' | 'maintenance' | 'gain';
@@ -237,7 +238,7 @@ function InnerPage({ path }: { path: string }) {
     '/faq': { kicker: 'Вопросы перед стартом', title: <>Разобраться<br /><em>спокойно.</em></>, copy: 'Ответы на главные вопросы о формате, сопровождении и стоимости программы.' },
     '/contacts': { kicker: 'Связаться напрямую', title: <>Готова начать<br /><em>свой путь?</em></>, copy: 'Наталья ответит лично, расскажет детали программы и поможет сделать первый шаг без стресса.' },
     '/calculator': { kicker: 'Расчёт КБЖУ', title: <>Твоя точка<br /><em>старта.</em></>, copy: 'Индивидуальный ориентир по калориям, белкам, жирам и углеводам.' },
-    '/application': { kicker: 'Анкета на участие', title: <>Перед стартом<br /><em>познакомимся.</em></>, copy: 'Заполни анкету — она попадёт в онлайн-таблицу, а Наталья свяжется с тобой лично и ответит на вопросы о программе.' },
+    '/application': { kicker: 'Анкета на участие', title: <>Перед стартом<br /><em>познакомимся.</em></>, copy: 'Заполни анкету — Наталья получит её безопасно и свяжется выбранным способом, чтобы ответить на вопросы о программе.' },
   };
   const current = data[path] || data['/about'];
   if (path === '/calculator') return <NutritionCalculator />;
@@ -271,7 +272,7 @@ function App() {
     <section className="case-studies wide"><Reveal><p className="eyebrow">Что входит в программу</p><h2>Система, которая<br /><em>остаётся с тобой.</em></h2></Reveal><div className="case-list">{[['Твоя формула тарелки', 'Понятные порции белка, гарнира, овощей и жиров под твою цель', '/gallery/inbound/05.jpg'], ['Практика замен', 'Картофель, гречка или макароны — учимся выбирать без страха и запретов', '/gallery/inbound/26.jpg'], ['Ежедневная связь', 'Личный наставник, разбор тарелок, обратная связь и групповой чат', '/gallery/inbound/07.jpg']].map((item, i) => <Reveal key={item[0]} delay={i * .1}><article className="case-item"><div className="case-label"><h3>{item[0]}</h3><p>{item[1]}</p></div><img src={item[2]} alt={item[0]} loading="lazy" /></article></Reveal>)}</div></section>
     <Partner /><section id="application" className="manifesto"><div className="manifesto-inner"><Reveal><p className="eyebrow light">Программа «Умный путь к стройности»</p><h2>Первый шаг —<br /><em>оставить заявку.</em></h2></Reveal><Reveal delay={.2} className="manifesto-copy"><p>После заявки Наталья свяжется с тобой лично, расскажет детали участия и поможет понять, подходит ли тебе такой формат.</p><a className="text-link" href="/application">Заполнить анкету <ArrowUpRight size={15} /></a></Reveal></div></section>
     <section id="faq" className="faq wide"><Reveal><p className="eyebrow">Вопросы перед стартом</p><h2>Сомнения —<br /><em>это нормально.</em></h2><p className="faq-lead">Марафон не требует идеальной дисциплины. Он нужен, чтобы научиться принимать понятные решения даже в неидеальный день.</p></Reveal><div className="faq-grid">{faqItems.slice(0, 4).map(([question, answer]) => <details key={question}><summary><span>{question}</span><ArrowUpRight size={18} /></summary><p>{answer}</p></details>)}</div></section>
-    <section id="calories" className="calorie-band"><div className="calorie-inner wide"><div><p className="eyebrow light">Быстрый первый шаг</p><h2>Понять свою<br /><em>точку старта.</em></h2></div><a className="button light-button" href="/calculator">Рассчитать КБЖУ <ArrowUpRight size={16} /></a></div></section>
+    <section id="calories" className="calorie-band"><div className="calorie-inner wide"><div><p className="eyebrow light">Быстрый первый шаг</p><h2>Понять свою<br /><em>точку старта.</em></h2></div><a className="button light-button" href="/calculator">Бесплатно рассчитать КБЖУ <ArrowUpRight size={16} /></a></div></section>
     <section id="contacts" className="contact page-column"><Reveal><div className="eyebrow contact-kicker">Не ещё одна диета</div><h2>Твоя еда может<br /><em>стать опорой.</em></h2><p className="contact-lead">Без запретов, чужих таблиц и попыток быть идеальной. С пониманием своей нормы, свободой выбора и поддержкой человека, который поможет не бросить на полпути.</p><blockquote>«Самостоятельность начинается в тот момент, когда ты можешь посмотреть на продукты и спокойно решить: вот моя тарелка на сегодня».</blockquote></Reveal><a className="contact-submit" href="/application">Понять, подходит ли мне программа <ArrowUpRight size={17} /></a><footer><span>Умный путь к стройности © 2026</span><span>Информация не заменяет консультацию врача</span><a href="#top">Наверх ↑</a></footer></section><Footer /><nav className="bottom-nav" aria-label="Быстрая заявка"><button className="bottom-menu" type="button" onClick={() => setMenuOpen(true)} aria-label="Открыть меню"><Menu size={19} /></button><span>SSW</span><a className="button primary" href="/application">Подать заявку <ArrowUpRight size={14} /></a></nav>
   </main>;
 }
