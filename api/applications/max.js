@@ -20,6 +20,7 @@ export default async function handler(req, res) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Origin': ALLOWED_ORIGIN,
         'X-Application-Relay-Secret': RELAY_SECRET,
         'X-Idempotency-Key': idempotencyKey
       },
